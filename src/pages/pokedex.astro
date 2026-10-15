@@ -1,0 +1,92 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import pokedexData from "../data/dex_data.json";
+import { getPokemonName, getPokemonTypes } from "../utils/pokemon.js";
+import "../styles/dex_style.css";
+
+const rawList = Object.entries(pokedexData).map(
+    ([key, value]: [string, any]) => ({
+        ...value,
+        pkmId: value.id !== undefined ? String(value.id) : key,
+    }),
+);
+
+const pokemonList = rawList.sort((a, b) => {
+    const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+    const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+    if (baseA !== baseB) return baseA - baseB;
+    return formA - formB;
+});
+---
+
+<BaseLayout title="Pokédex - Vela Pokédex">
+    <div class="pokedex-container">
+        <h1>Vela Pokédex</h1>
+
+        <div class="search-bar">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search a Pokémon..."
+            />
+        </div>
+
+        <div class="pokemon-grid" id="pokemon-grid">
+            {pokemonList.map((pokemon) => {
+                const pokemonName = getPokemonName(pokemon);
+                const pokemonTypes = getPokemonTypes(pokemon);
+
+                return (
+                    <a
+                        href={`/dex/${pokemon.pkmId}`}
+                        class="pokemon-card"
+                        data-name={pokemonName.toLowerCase()}
+                    >
+                        <div class="card-header">
+                            <span class="pokemon-id">
+                                #{String(pokemon.pkmId).padStart(3, "0")}
+                            </span>
+                        </div>
+                        <div class="card-image">
+                            <img
+                                src={`/images/sprites/${pokemon.pkmId}.png`}
+                                alt={pokemonName}
+                                loading="lazy"
+                                onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'><rect width=\'96\' height=\'96\' fill=\'%231e1e2e\'/></svg>'"
+                            />
+                        </div>
+                        <div class="card-body">
+                            <h3>{pokemonName}</h3>
+                            <div class="types">
+                                {pokemonTypes.map((t: string) => (
+                                    <span
+                                        class={`type-badge type-${String(t).toLowerCase()}`}
+                                    >
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </a>
+                );
+            })}
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    const searchInput = document.getElementById(
+        "search-input",
+    ) as HTMLInputElement;
+    const cards = document.querySelectorAll(".pokemon-card");
+
+    searchInput?.addEventListener("input", (e) => {
+        const value = (e.target as HTMLInputElement).value.toLowerCase();
+        cards.forEach((card) => {
+            const name = card.getAttribute("data-name") || "";
+            (card as HTMLElement).style.display = name.includes(value)
+                ? "flex"
+                : "none";
+        });
+    });
+</script>

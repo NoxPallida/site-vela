@@ -1,0 +1,42 @@
+{
+    "diamond": [
+        {"name": "Crystal Cut", "cat": "atk"},
+        {"name": "Crystal Sword", "cat": "atk"},
+        {"name": "Diamond Storm", "cat": "atk"},
+        {"name": "Regional Pika-like", "cat": "pkm"},
+        {"name": "Mega Steelix", "cat": "pkm"},
+        {"name": "Sableye", "cat": "pkm"},
+        {"name": "Mega Sableye", "cat": "pkm"},
+        {"name": "Boldore", "cat": "pkm"},
+        {"name": "Gigalith", "cat": "pkm"},
+        {"name": "Mega Haxorus", "cat": "pkm"},
+        {"name": "Carbink", "cat": "pkm"},
+        {"name": "Diancie", "cat": "pkm"},
+        {"name": "Mega Diancie", "cat": "pkm"},
+        {"name": "Silvally - Diamond", "cat": "pkm"}
+    ],
+
+    "time": [
+        {"name": "Roar of Time", "cat": "atk"},
+        {"name": "Celebi", "cat": "pkm"},
+        {"name": "Dialga", "cat": "pkm"},
+        {"name": "Dialga - Origin", "cat": "pkm"}
+    ],
+
+    "space": [
+        {"name": "Spacial Rend", "cat": "atk"},
+        {"name": "Palkia", "cat": "pkm"},
+        {"name": "Palkia - Origin", "cat": "pkm"}
+    ],
+
+    "shadow": [
+        {"name": "Shadow Force", "cat": "atk"},
+        {"name": "Giratina", "cat": "pkm"},
+        {"name": "Giratina - Origin", "cat": "pkm"}
+    ],
+
+    "divine": [
+        {"name": "Judgment", "cat": "atk"},
+        {"name": "Arceus", "cat": "pkm"}
+    ]
+}

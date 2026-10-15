@@ -1,0 +1,250 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import pokedexData from "../../data/dex_data.json";
+import {
+    getPokemonName,
+    getPokemonTypes,
+    extractStats,
+    calcStat,
+    getPokemonMovepool,
+} from "../../utils/pokemon.js";
+import "../../styles/dex_style.css";
+
+interface Move {
+    level: number | string;
+    name: string;
+    type: string;
+    category: string;
+    power: number | string;
+    accuracy: number | string;
+}
+
+export async function getStaticPaths() {
+    return Object.entries(pokedexData).map(([key, value]: [string, any]) => {
+        const pkmId = value.id !== undefined ? String(value.id) : key;
+        return {
+            params: { id: pkmId },
+            props: { pokemon: value, pkmId },
+        };
+    });
+}
+
+const { pokemon, pkmId } = Astro.props;
+const pokemonName = getPokemonName(pokemon);
+const pokemonTypes = getPokemonTypes(pokemon);
+const rawStats = extractStats(pokemon);
+const movepool: Move[] = getPokemonMovepool(pkmId);
+
+const statConfig: Record<
+    string,
+    { label: string; rowBg: string; barBg: string; border: string }
+> = {
+    hp: {
+        label: "HP",
+        rowBg: "#d5f795",
+        barBg: "#a8f02f",
+        border: "#72a818",
+    },
+    attack: {
+        label: "Attack",
+        rowBg: "#fce893",
+        barBg: "#f8d030",
+        border: "#b89818",
+    },
+    defense: {
+        label: "Defense",
+        rowBg: "#fbc396",
+        barBg: "#f08030",
+        border: "#b55210",
+    },
+    special_attack: {
+        label: "Sp. Atk",
+        rowBg: "#a4d8fa",
+        barBg: "#58abf6",
+        border: "#2272c3",
+    },
+    special_defense: {
+        label: "Sp. Def",
+        rowBg: "#a3b2f7",
+        barBg: "#5070dd",
+        border: "#1f38a1",
+    },
+    speed: {
+        label: "Speed",
+        rowBg: "#f7a1c8",
+        barBg: "#e85098",
+        border: "#a61d62",
+    },
+};
+
+const statsOrder = [
+    { key: "hp", rawKey: "hp" },
+    { key: "attack", rawKey: "attack" },
+    { key: "defense", rawKey: "defense" },
+    { key: "special_attack", rawKey: "special_attack" },
+    { key: "special_defense", rawKey: "special_defense" },
+    { key: "speed", rawKey: "speed" },
+];
+
+const totalStats = statsOrder.reduce((sum, item) => {
+    return sum + (Number(rawStats[item.rawKey] || rawStats[item.key]) || 0);
+}, 0);
+---
+
+<BaseLayout title={`${pokemonName} - Vela Pokédex`}>
+    <div class="dex-detail-container">
+        <a href="/pokedex" class="back-link">
+            ← Back to Pokédex
+        </a>
+
+        <div class="pokemon-header">
+            <span class="pokemon-id">#{String(pkmId).padStart(3, "0")}</span>
+            <h1>{pokemonName}</h1>
+            <div class="types">
+                {pokemonTypes.map((t: string) => (
+                    <span class={`type-badge type-${String(t).toLowerCase()}`}>
+                        {t}
+                    </span>
+                ))}
+            </div>
+        </div>
+
+        <div class="pokemon-main-info">
+            <div class="sprite-box">
+                <img
+                    src={`/images/sprites/${pkmId}.png`}
+                    alt={pokemonName}
+                    onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'150\' height=\'150\'><rect width=\'150\' height=\'150\' fill=\'%231e1e2e\'/></svg>'"
+                />
+            </div>
+
+            <div class="stats-box">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th colspan="3" class="header-stat">
+                                Stat
+                            </th>
+                            <th colspan="2" class="header-range">
+                                Range
+                            </th>
+                        </tr>
+                        <tr class="subheader-row">
+                            <th colspan="3"></th>
+                            <th>At Lv. 50</th>
+                            <th>At Lv. 100</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {statsOrder.map((item) => {
+                            const val =
+                                Number(
+                                    rawStats[item.rawKey] || rawStats[item.key],
+                                ) || 0;
+                            const isHP = item.key === "hp";
+                            const config = statConfig[item.key];
+
+                            const range50 = calcStat(val, isHP, 50);
+                            const range100 = calcStat(val, isHP, 100);
+
+                            return (
+                                <tr
+                                    style={`background-color: ${config.rowBg}; color: #000;`}
+                                >
+                                    <td class="stat-name-cell">
+                                        <strong>{config.label}:</strong>
+                                    </td>
+                                    <td class="stat-value-cell">
+                                        <strong>{val}</strong>
+                                    </td>
+                                    <td class="stat-bar-cell">
+                                        <div class="bar-container">
+                                            <div
+                                                class="bar-fill"
+                                                style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
+                                            ></div>
+                                        </div>
+                                    </td>
+                                    <td class="stat-range-cell">
+                                        {range50.min} - {range50.max}
+                                    </td>
+                                    <td class="stat-range-cell">
+                                        {range100.min} - {range100.max}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        <tr class="total-row">
+                            <td class="stat-name-cell">
+                                <strong>Total:</strong>
+                            </td>
+                            <td class="stat-value-cell">
+                                <strong>{totalStats}</strong>
+                            </td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="stats-notes">
+                    <ul>
+                        <li>
+                            Minimum stats are calculated with 0 EVs, IVs of 0,
+                            and (if applicable) a hindering nature.
+                        </li>
+                        <li>
+                            Maximum stats are calculated with 252 EVs, IVs of
+                            31, and (if applicable) a helpful nature.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {movepool.length > 0 && (
+            <div class="movepool-section" style="margin-top: 2rem;">
+                <h2>Learned Moves</h2>
+                <table class="move-table">
+                    <thead>
+                        <tr class="move-header">
+                            <th>Level</th>
+                            <th>Move</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Power</th>
+                            <th>Accuracy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {movepool.map((move: Move) => (
+                            <tr class="move-row">
+                                <td>
+                                    {move.level === 0 || move.level === 1
+                                        ? "Evo / 1"
+                                        : move.level}
+                                </td>
+                                <td>{move.name}</td>
+                                <td>
+                                    <span
+                                        class={`type-badge type-${move.type.toLowerCase()}`}
+                                    >
+                                        {move.type}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class={`move-category ${move.category.toLowerCase()}`}
+                                    >
+                                        {move.category}
+                                    </span>
+                                </td>
+                                <td>{move.power}</td>
+                                <td>{move.accuracy}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        )}
+    </div>
+</BaseLayout>

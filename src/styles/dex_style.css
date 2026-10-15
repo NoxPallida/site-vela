@@ -1,0 +1,265 @@
+/* ==========================================================================
+   1. GRILLE ET CARTE POKÉDEX
+   ========================================================================== */
+.pokedex-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.search-bar {
+  margin-bottom: 2rem;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #1e1e2e;
+  color: #fff;
+}
+
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.pokemon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #2a2a40;
+  border-radius: 10px;
+  padding: 1rem;
+  text-decoration: none;
+  color: #fff;
+  min-height: 220px;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pokemon-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+
+.card-header {
+  width: 100%;
+  text-align: right;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.card-image {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-image img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+}
+
+.card-body h3 {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* ==========================================================================
+   2. FICHE DÉTAIL POKÉMON
+   ========================================================================== */
+.dex-detail-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: #fff;
+}
+
+.back-link {
+  color: #8a8acb;
+  text-decoration: none;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.pokemon-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pokemon-id {
+  font-size: 1.5rem;
+  color: #888;
+}
+
+.pokemon-main-info {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2rem;
+  background: var(--bg-card);
+  padding: 2rem;
+  border-radius: 12px;
+}
+
+.sprite-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #1e1e2e;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 200px;
+  height: 200px;
+}
+
+.sprite-box img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+}
+
+.stats-box h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+/* ==========================================================================
+   3. TABLEAU DES STATISTIQUES
+   ========================================================================== */
+.stats-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid #808080;
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: sans-serif;
+  font-size: 0.9rem;
+}
+
+.stats-table th {
+  background-color: #d0d0d0;
+  color: #111;
+  text-align: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #a0a0a0;
+}
+
+.header-range {
+  border-left: 2px solid #a0a0a0;
+}
+
+.subheader-row th {
+  font-size: 0.8rem;
+  font-weight: bold;
+  background-color: #e0e0e0;
+}
+
+.stats-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.stat-name-cell {
+  width: 80px;
+  text-align: left;
+}
+
+.stat-value-cell {
+  width: 45px;
+  text-align: right;
+  padding-right: 15px !important;
+}
+
+.stat-bar-cell {
+  width: 200px;
+}
+
+.bar-container {
+  width: 100%;
+  height: 18px;
+  background: transparent;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.stat-range-cell {
+  text-align: center;
+  width: 100px;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.total-row {
+  background-color: #c0c0c0;
+  color: #000;
+}
+
+.stats-notes {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.stats-notes ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.stats-notes li {
+  margin-bottom: 4px;
+}
+
+/* ==========================================================================
+   4. BADGES DE TYPES
+   ========================================================================== */
+.types {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.type-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #fff;
+}
+
+.type-normal   { background-color: #9FA19F; color: #000000; }
+.type-fire     { background-color: #E62829; }
+.type-water    { background-color: #2980EF; }
+.type-electric { background-color: #FAC000; color: #000000; }
+.type-grass    { background-color: #3FA129; }
+.type-ice      { background-color: #3DCEF3; color: #000000; }
+.type-fighting { background-color: #FF8000; color: #000000; }
+.type-poison   { background-color: #9141CB; }
+.type-ground   { background-color: #915121; }
+.type-flying   { background-color: #81B9EF; color: #000000; }
+.type-psychic  { background-color: #EF4179; }
+.type-bug      { background-color: #91A119; color: #000000; }
+.type-rock     { background-color: #AFA981; color: #000000; }
+.type-ghost    { background-color: #704170; }
+.type-dragon   { background-color: #5060E1; }
+.type-dark     { background-color: #624D4E; }
+.type-steel    { background-color: #60A1B8; }
+.type-fairy    { background-color: #EF70EF; color: #000000; }
+.type-shadow   { background-color: #5B1268; }
+.type-divine   { background-color: #FFFFF0; color: #000000; }
+.type-time     { background-color: #F0C300; color: #000000; }
+.type-space    { background-color: #2E1A47; }
