@@ -232,7 +232,11 @@ const totalStats = statsOrder.reduce((sum, item) => {
                                         <div class="bar-container">
                                             <div
                                                 class="bar-fill"
-                                                style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
+                                                style={`
+                                                        width: ${Math.min(100, (val / 255) * 100)}%;
+                                                        background-color: ${config.barBg};
+                                                        border: 1px solid ${config.border};
+                                                `}
                                             ></div>
                                         </div>
                                     </td>
