@@ -35,6 +35,9 @@ const pokemonList = rawList.sort((a, b) => {
             {pokemonList.map((pokemon) => {
                 const pokemonName = getPokemonName(pokemon);
                 const pokemonTypes = getPokemonTypes(pokemon);
+                const fallbackImage =
+                    pokemon.image ||
+                    "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
 
                 return (
                     <a
@@ -49,10 +52,12 @@ const pokemonList = rawList.sort((a, b) => {
                         </div>
                         <div class="card-image">
                             <img
-                                src={`/images/sprites/${pokemon.pkmId}.png`}
+                                src={`/images/${pokemon.pkmId}.png`}
                                 alt={pokemonName}
+                                width="96"
+                                height="96"
                                 loading="lazy"
-                                onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'><rect width=\'96\' height=\'96\' fill=\'%231e1e2e\'/></svg>'"
+                                onerror={`this.onerror=null; this.src='${fallbackImage}';`}
                             />
                         </div>
                         <div class="card-body">

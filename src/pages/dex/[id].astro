@@ -35,6 +35,35 @@ const pokemonTypes = getPokemonTypes(pokemon);
 const rawStats = extractStats(pokemon);
 const movepool: Move[] = getPokemonMovepool(pkmId);
 
+const pokemonList = Object.entries(pokedexData)
+    .map(([key, value]: [string, any]) => ({
+        ...value,
+        pkmId: value.id !== undefined ? String(value.id) : key,
+    }))
+    .sort((a, b) => {
+        const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+        const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+        if (baseA !== baseB) return baseA - baseB;
+        return formA - formB;
+    });
+
+const currentIndex = pokemonList.findIndex((p) => p.pkmId === pkmId);
+const prevPokemon = currentIndex > 0 ? pokemonList[currentIndex - 1] : null;
+const nextPokemon =
+    currentIndex < pokemonList.length - 1
+        ? pokemonList[currentIndex + 1]
+        : null;
+
+const prevName = prevPokemon ? getPokemonName(prevPokemon) : "";
+const nextName = nextPokemon ? getPokemonName(nextPokemon) : "";
+
+// Fallbacks d'images pour le sprite principal et les icônes de navigation
+const fallbackSVG =
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='%231e1e2e'/></svg>";
+const fallbackImage = pokemon?.image || fallbackSVG;
+const prevFallback = prevPokemon?.image || fallbackSVG;
+const nextFallback = nextPokemon?.image || fallbackSVG;
+
 const statConfig: Record<
     string,
     { label: string; rowBg: string; barBg: string; border: string }
@@ -93,9 +122,49 @@ const totalStats = statsOrder.reduce((sum, item) => {
 
 <BaseLayout title={`${pokemonName} - Vela Pokédex`}>
     <div class="dex-detail-container">
-        <a href="/pokedex" class="back-link">
-            ← Back to Pokédex
-        </a>
+        <nav class="dex-nav-bar">
+            {prevPokemon ? (
+                <a href={`/dex/${prevPokemon.pkmId}`} class="nav-btn prev-btn">
+                    ←
+                    <img
+                        src={`/images/${prevPokemon.pkmId}.png`}
+                        alt={prevName}
+                        width="16"
+                        height="16"
+                        class="nav-icon"
+                        onerror={`this.onerror=null; this.src='${prevFallback}';`}
+                    />
+                    <span>
+                        #{String(prevPokemon.pkmId).padStart(3, "0")} {prevName}
+                    </span>
+                </a>
+            ) : (
+                <div class="nav-placeholder"></div>
+            )}
+
+            <a href="/pokedex" class="back-link">
+                Pokédex
+            </a>
+
+            {nextPokemon ? (
+                <a href={`/dex/${nextPokemon.pkmId}`} class="nav-btn next-btn">
+                    <span>
+                        {nextName} #{String(nextPokemon.pkmId).padStart(3, "0")}
+                    </span>
+                    <img
+                        src={`/images/${nextPokemon.pkmId}.png`}
+                        alt={nextName}
+                        width="16"
+                        height="16"
+                        class="nav-icon"
+                        onerror={`this.onerror=null; this.src='${nextFallback}';`}
+                    />
+                    →
+                </a>
+            ) : (
+                <div class="nav-placeholder"></div>
+            )}
+        </nav>
 
         <div class="pokemon-header">
             <span class="pokemon-id">#{String(pkmId).padStart(3, "0")}</span>
@@ -112,9 +181,11 @@ const totalStats = statsOrder.reduce((sum, item) => {
         <div class="pokemon-main-info">
             <div class="sprite-box">
                 <img
-                    src={`/images/sprites/${pkmId}.png`}
+                    src={`/images/${pkmId}.png`}
                     alt={pokemonName}
-                    onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'150\' height=\'150\'><rect width=\'150\' height=\'150\' fill=\'%231e1e2e\'/></svg>'"
+                    width="96"
+                    height="96"
+                    onerror={`this.onerror=null; this.src='${fallbackImage}';`}
                 />
             </div>
 
