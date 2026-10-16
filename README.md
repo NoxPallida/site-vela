@@ -1,4 +1,4 @@
-# Pkm_Vela_site
+# Pokémon Vela (Site)
 Made by Nox-Pallida and ShyBlobby
 
 - Images from https://assets.pokemon.com
