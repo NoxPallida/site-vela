@@ -4,94 +4,104 @@ import pokedexData from "../data/dex_data.json";
 import { getPokemonName, getPokemonTypes } from "../utils/pokemon.js";
 import "../styles/dex_style.css";
 
+const MISSINGNO_IMG =
+	"https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
+
 const rawList = Object.entries(pokedexData).map(
-    ([key, value]: [string, any]) => ({
-        ...value,
-        pkmId: value.id !== undefined ? String(value.id) : key,
-    }),
+	([key, value]: [string, any]) => ({
+		...value,
+		pkmId: value.id !== undefined ? String(value.id) : key,
+	}),
 );
 
 const pokemonList = rawList.sort((a, b) => {
-    const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
-    const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
-    if (baseA !== baseB) return baseA - baseB;
-    return formA - formB;
+	const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+	const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+	if (baseA !== baseB) return baseA - baseB;
+	return formA - formB;
 });
+
+function getImageProps(pkm: any, id: string) {
+	const hasJsonImage = pkm?.image && pkm.image !== MISSINGNO_IMG;
+	const src = hasJsonImage ? pkm.image : `/images/${id}.png`;
+	const onerror = hasJsonImage
+		? `if(!this.dataset.fallback){this.dataset.fallback='1';this.src='/images/${id}.png';}else{this.src='${MISSINGNO_IMG}';this.onerror=null;}`
+		: `this.onerror=null; this.src='${MISSINGNO_IMG}';`;
+	return { src, onerror };
+}
 ---
 
 <BaseLayout title="Pokédex - Vela Pokédex">
-    <div class="pokedex-container">
-        <h1>Vela Pokédex</h1>
+	<div class="pokedex-container">
+		<h1>Vela Pokédex</h1>
 
-        <div class="search-bar">
-            <input
-                type="text"
-                id="search-input"
-                placeholder="Search a Pokémon..."
-            />
-        </div>
+		<div class="search-bar">
+			<input
+				type="text"
+				id="search-input"
+				placeholder="Search a Pokémon..."
+			/>
+		</div>
 
-        <div class="pokemon-grid" id="pokemon-grid">
-            {pokemonList.map((pokemon) => {
-                const pokemonName = getPokemonName(pokemon);
-                const pokemonTypes = getPokemonTypes(pokemon);
-                const fallbackImage =
-                    pokemon.image ||
-                    "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
+		<div class="pokemon-grid" id="pokemon-grid">
+			{pokemonList.map((pokemon) => {
+				const pokemonName = getPokemonName(pokemon);
+				const pokemonTypes = getPokemonTypes(pokemon);
+				const imgProps = getImageProps(pokemon, pokemon.pkmId);
 
-                return (
-                    <a
-                        href={`/dex/${pokemon.pkmId}`}
-                        class="pokemon-card"
-                        data-name={pokemonName.toLowerCase()}
-                    >
-                        <div class="card-header">
-                            <span class="pokemon-id">
-                                #{String(pokemon.pkmId).padStart(3, "0")}
-                            </span>
-                        </div>
-                        <div class="card-image">
-                            <img
-                                src={`/images/${pokemon.pkmId}.png`}
-                                alt={pokemonName}
-                                width="96"
-                                height="96"
-                                loading="lazy"
-                                onerror={`this.onerror=null; this.src='${fallbackImage}';`}
-                            />
-                        </div>
-                        <div class="card-body">
-                            <h3>{pokemonName}</h3>
-                            <div class="types">
-                                {pokemonTypes.map((t: string) => (
-                                    <span
-                                        class={`type-badge type-${String(t).toLowerCase()}`}
-                                    >
-                                        {t}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </a>
-                );
-            })}
-        </div>
-    </div>
+				return (
+					<a
+						href={`/dex/${pokemon.pkmId}`}
+						class="pokemon-card"
+						data-name={pokemonName.toLowerCase()}
+					>
+						<div class="card-header">
+							<span class="pokemon-id">
+								#{String(pokemon.pkmId).padStart(3, "0")}
+							</span>
+						</div>
+						<div class="card-image">
+							<img
+								src={imgProps.src}
+								alt={pokemonName}
+								width="96"
+								height="96"
+								loading="lazy"
+								onerror={imgProps.onerror}
+							/>
+						</div>
+						<div class="card-body">
+							<h3>{pokemonName}</h3>
+							<div class="types">
+								{pokemonTypes.map((t: string) => (
+									<span
+										class={`type-badge type-${String(t).toLowerCase()}`}
+									>
+										{t}
+									</span>
+								))}
+							</div>
+						</div>
+					</a>
+				);
+			})}
+		</div>
+	</div>
 </BaseLayout>
 
 <script>
-    const searchInput = document.getElementById(
-        "search-input",
-    ) as HTMLInputElement;
-    const cards = document.querySelectorAll(".pokemon-card");
+	const searchInput = document.getElementById(
+		"search-input",
+	) as HTMLInputElement;
+	const cards = document.querySelectorAll(".pokemon-card");
 
-    searchInput?.addEventListener("input", (e) => {
-        const value = (e.target as HTMLInputElement).value.toLowerCase();
-        cards.forEach((card) => {
-            const name = card.getAttribute("data-name") || "";
-            (card as HTMLElement).style.display = name.includes(value)
-                ? "flex"
-                : "none";
-        });
-    });
+	searchInput?.addEventListener("input", (e) => {
+		const value = (e.target as HTMLInputElement).value.toLowerCase();
+		cards.forEach((card) => {
+			const name = card.getAttribute("data-name") || "";
+			(card as HTMLElement).style.display = name.includes(value)
+				? "flex"
+				: "none";
+		});
+	});
 </script>

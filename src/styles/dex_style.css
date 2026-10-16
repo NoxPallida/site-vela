@@ -1,6 +1,3 @@
-/* ==========================================================================
-   1. GRILLE ET CARTE POKÉDEX
-   ========================================================================== */
 .pokedex-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -16,9 +13,14 @@
   padding: 0.8rem 1.2rem;
   font-size: 1rem;
   border-radius: 8px;
-  border: 1px solid #444;
-  background-color: #1e1e2e;
-  color: #fff;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-dark-box);
+  color: var(--text-main);
+  box-sizing: border-box;
+}
+
+.search-bar input::placeholder {
+  color: var(--text-muted);
 }
 
 .pokemon-grid {
@@ -31,26 +33,29 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #2a2a40;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 1rem;
   text-decoration: none;
-  color: #fff;
+  color: var(--text-main);
   min-height: 220px;
   box-sizing: border-box;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .pokemon-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  background-color: var(--bg-card-hover);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  border-color: var(--border-strong);
 }
 
 .card-header {
   width: 100%;
   text-align: right;
   font-size: 0.85rem;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .card-image {
@@ -65,6 +70,7 @@
   width: 96px;
   height: 96px;
   object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .card-body h3 {
@@ -73,14 +79,11 @@
   text-align: center;
 }
 
-/* ==========================================================================
-   2. FICHE DÉTAIL POKÉMON & NAVIGATION (ALIGNEMENT FIXE)
-   ========================================================================== */
 .dex-detail-container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 1.5rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .dex-nav-bar {
@@ -102,7 +105,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #8a8acb;
+  color: var(--accent-link);
   text-decoration: none;
   font-weight: bold;
   font-size: 0.9rem;
@@ -110,7 +113,7 @@
 }
 
 .back-link {
-  color: #8a8acb;
+  color: var(--accent-link);
   text-decoration: none;
   font-weight: bold;
   font-size: 1rem;
@@ -119,7 +122,7 @@
 
 .nav-btn:hover,
 .back-link:hover {
-  color: #a3a3e6;
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 
@@ -131,53 +134,133 @@
   flex-shrink: 0;
 }
 
-.pokemon-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.pokemon-id {
-  font-size: 1.5rem;
-  color: #888;
-}
-
-.pokemon-main-info {
+.wiki-layout {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 1fr 320px;
   gap: 2rem;
-  background: var(--bg-card);
-  padding: 2rem;
-  border-radius: 12px;
+  align-items: start;
 }
 
-.sprite-box {
+@media (max-width: 850px) {
+  .wiki-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wiki-section {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.wiki-section h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  border-bottom: 2px solid var(--border-strong);
+  padding-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.dex-entry-text {
+  font-style: italic;
+  line-height: 1.5;
+  color: #C9D1D9;
+  margin: 0;
+}
+
+.wiki-infobox {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.infobox-title {
+  background-color: var(--bg-header-box);
+  padding: 0.85rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.infobox-title h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--text-main);
+}
+
+.infobox-title .pokemon-id {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.infobox-sprite {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f2f2e2;
-  border-radius: 8px;
-  padding: 1rem;
-  width: 228px;
-  height: 228px;
+  background-color: #FFFFFF;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border-strong);
 }
 
-.sprite-box img {
-  width: 192px;
-  height: 192px;
+.infobox-sprite img {
+  width: 160px;
+  height: 160px;
   object-fit: contain;
   image-rendering: pixelated;
 }
 
-.stats-box h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
+.infobox-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
 }
 
-/* ==========================================================================
-   3. TABLEAU DES STATISTIQUES
-   ========================================================================== */
+.wiki-infobox .infobox-table th {
+  background-color: #262C36 !important;
+  color: var(--text-main);
+  text-align: left;
+  padding: 8px 12px;
+  width: 38%;
+  font-weight: 600;
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.wiki-infobox .infobox-table td {
+  background-color: #161B22 !important;
+  padding: 8px 12px;
+  color: var(--text-main);
+  text-align: center;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.wiki-infobox .infobox-table tr:last-child th,
+.wiki-infobox .infobox-table tr:last-child td {
+  border-bottom: none;
+}
+
+.wiki-infobox .types {
+  justify-content: center;
+}
+
+.location-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.location-tag {
+  background: var(--bg-header-box);
+  border: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
 .stats-table {
   width: 100%;
   border-collapse: separate;
@@ -186,7 +269,7 @@
   border-radius: 8px;
   overflow: hidden;
   font-family: sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .stats-table th {
@@ -202,34 +285,34 @@
 }
 
 .subheader-row th {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: bold;
   background-color: #e0e0e0;
 }
 
 .stats-table td {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .stat-name-cell {
-  width: 80px;
+  width: 75px;
   text-align: left;
 }
 
 .stat-value-cell {
-  width: 45px;
+  width: 40px;
   text-align: right;
-  padding-right: 15px !important;
+  padding-right: 10px !important;
 }
 
 .stat-bar-cell {
-  width: 200px;
+  width: 180px;
 }
 
 .bar-container {
   width: 100%;
-  height: 18px;
+  height: 16px;
   background: transparent;
 }
 
@@ -241,7 +324,7 @@
 
 .stat-range-cell {
   text-align: center;
-  width: 100px;
+  width: 90px;
   border-left: 1px solid rgba(0, 0, 0, 0.15);
 }
 
@@ -252,29 +335,22 @@
 
 .stats-notes {
   margin-top: 10px;
-  font-size: 0.8rem;
-  color: #aaa;
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .stats-notes ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 18px;
 }
 
-.stats-notes li {
-  margin-bottom: 4px;
-}
-
-/* ==========================================================================
-   4. BADGES DE TYPES
-   ========================================================================== */
 .types {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .type-badge {
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -305,3 +381,100 @@
 .type-time     { background-color: #F0C300; color: #000000; }
 .type-space    { background-color: #2E1A47; }
 .type-diamond  { background-color: #BFE6F2; color: #000000; }
+
+.move-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.move-table th {
+  background-color: var(--bg-header-box);
+  color: var(--text-muted);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.move-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-main);
+}
+
+.move-table tbody tr:nth-child(odd) td {
+  background-color: #161B22;
+}
+
+.move-table tbody tr:nth-child(even) td {
+  background-color: #1C2129;
+}
+
+.move-table tbody tr:hover td {
+  background-color: #262C36;
+}
+
+.move-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gender-male {
+  color: #79B8FF;
+  font-weight: bold;
+}
+
+.gender-female {
+  color: #F7A1C8;
+  font-weight: bold;
+}
+
+.evolution-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.evo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.evo-card img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.evo-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.evo-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.evo-branches {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  border-left: 2px dashed var(--border-strong);
+  padding-left: 1rem;
+}

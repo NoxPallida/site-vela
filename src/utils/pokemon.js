@@ -53,9 +53,14 @@ export function getPokemonMovepool(pkmId) {
     });
 }
 
+// Calcul des statistiques min et max (niveau 50 ou 100)
 export function calcStat(base, isHP, level = 100) {
     const baseNum = Number(base) || 0;
+
     if (isHP) {
+        if (baseNum === 1) {
+            return { min: 1, max: 1 };
+        }
         const min = Math.floor(((2 * baseNum) * level) / 100) + level + 10;
         const max = Math.floor(((2 * baseNum + 31 + 63) * level) / 100) + level + 10;
         return { min, max };

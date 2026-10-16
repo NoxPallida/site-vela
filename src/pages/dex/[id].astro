@@ -57,23 +57,32 @@ const nextPokemon =
 const prevName = prevPokemon ? getPokemonName(prevPokemon) : "";
 const nextName = nextPokemon ? getPokemonName(nextPokemon) : "";
 
-// Fallbacks d'images pour le sprite principal et les icônes de navigation
-const fallbackSVG =
-	"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='%231e1e2e'/></svg>";
-const fallbackImage = pokemon?.image || fallbackSVG;
-const prevFallback = prevPokemon?.image || fallbackSVG;
-const nextFallback = nextPokemon?.image || fallbackSVG;
+// --- GESTION DES IMAGES ---
+const MISSINGNO_IMG =
+	"https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
+
+function getImageProps(pkm: any, id: string) {
+	const hasJsonImage = pkm?.image && pkm.image !== MISSINGNO_IMG;
+	const src = hasJsonImage ? pkm.image : `/images/${id}.png`;
+	const onerror = hasJsonImage
+		? `if(!this.dataset.fallback){this.dataset.fallback='1';this.src='/images/${id}.png';}else{this.src='${MISSINGNO_IMG}';this.onerror=null;}`
+		: `this.onerror=null; this.src='${MISSINGNO_IMG}';`;
+	return { src, onerror };
+}
+
+const mainImage = getImageProps(pokemon, pkmId);
+const prevImage = prevPokemon
+	? getImageProps(prevPokemon, prevPokemon.pkmId)
+	: null;
+const nextImage = nextPokemon
+	? getImageProps(nextPokemon, nextPokemon.pkmId)
+	: null;
 
 const statConfig: Record<
 	string,
 	{ label: string; rowBg: string; barBg: string; border: string }
 > = {
-	hp: {
-		label: "HP",
-		rowBg: "#d5f795",
-		barBg: "#a8f02f",
-		border: "#72a818",
-	},
+	hp: { label: "HP", rowBg: "#d5f795", barBg: "#a8f02f", border: "#72a818" },
 	attack: {
 		label: "Attack",
 		rowBg: "#fce893",
@@ -122,17 +131,18 @@ const totalStats = statsOrder.reduce((sum, item) => {
 
 <BaseLayout title={`${pokemonName} - Vela Pokédex`}>
 	<div class="dex-detail-container">
+		<!-- Navigation supérieure -->
 		<nav class="dex-nav-bar">
-			{prevPokemon ? (
+			{prevPokemon && prevImage ? (
 				<a href={`/dex/${prevPokemon.pkmId}`} class="nav-btn prev-btn">
 					←
 					<img
-						src={`/images/${prevPokemon.pkmId}.png`}
+						src={prevImage.src}
 						alt={prevName}
 						width="16"
 						height="16"
 						class="nav-icon"
-						onerror={`this.onerror=null; this.src='${prevFallback}';`}
+						onerror={prevImage.onerror}
 					/>
 					<span>
 						#{String(prevPokemon.pkmId).padStart(3, "0")} {prevName}
@@ -146,18 +156,18 @@ const totalStats = statsOrder.reduce((sum, item) => {
 				Pokédex
 			</a>
 
-			{nextPokemon ? (
+			{nextPokemon && nextImage ? (
 				<a href={`/dex/${nextPokemon.pkmId}`} class="nav-btn next-btn">
 					<span>
 						{nextName} #{String(nextPokemon.pkmId).padStart(3, "0")}
 					</span>
 					<img
-						src={`/images/${nextPokemon.pkmId}.png`}
+						src={nextImage.src}
 						alt={nextName}
 						width="16"
 						height="16"
 						class="nav-icon"
-						onerror={`this.onerror=null; this.src='${nextFallback}';`}
+						onerror={nextImage.onerror}
 					/>
 					→
 				</a>
@@ -166,160 +176,352 @@ const totalStats = statsOrder.reduce((sum, item) => {
 			)}
 		</nav>
 
-		<div class="pokemon-header">
-			<span class="pokemon-id">#{String(pkmId).padStart(3, "0")}</span>
-			<h1>{pokemonName}</h1>
-			<div class="types">
-				{pokemonTypes.map((t: string) => (
-					<span class={`type-badge type-${String(t).toLowerCase()}`}>
-						{t}
-					</span>
-				))}
-			</div>
-		</div>
+		<!-- Layout Wiki Principal -->
+		<div class="wiki-layout">
+			<!-- Colonne de Gauche -->
+			<div class="main-content">
+				<!-- Description Pokédex -->
+				{pokemon?.dex_entry && (
+					<div class="wiki-section">
+						<h2>Pokédex Entry</h2>
+						<p class="dex-entry-text">« {pokemon.dex_entry} »</p>
+					</div>
+				)}
 
-		<div class="pokemon-main-info">
-			<div class="sprite-box">
-				<img
-					src={`/images/${pkmId}.png`}
-					alt={pokemonName}
-					width="96"
-					height="96"
-					onerror={`this.onerror=null; this.src='${fallbackImage}';`}
-				/>
-			</div>
+				<!-- Chaîne d'évolution avec embranchements récursifs -->
+				{pokemon?.evolution && pokemon.evolution.length > 0 && (
+					<div class="wiki-section">
+						<h2>Evolutions</h2>
+						<div class="evolution-chain">
+							{(() => {
+								const renderNodes = (nodes: any[]) => {
+									return nodes.map((node: any) => {
+										const nodeId = node.url
+											? node.url.split("=")[1]
+											: pkmId;
+										const imgProps = getImageProps(
+											node,
+											nodeId,
+										);
 
-			<div class="stats-box">
-				<table class="stats-table">
-					<thead>
-						<tr>
-							<th colspan="3" class="header-stat">
-								Stat
-							</th>
-							<th colspan="2" class="header-range">
-								Range
-							</th>
-						</tr>
-						<tr class="subheader-row">
-							<th colspan="3"></th>
-							<th>At Lv. 50</th>
-							<th>At Lv. 100</th>
-						</tr>
-					</thead>
-					<tbody>
-						{statsOrder.map((item) => {
-							const val =
-								Number(
-									rawStats[item.rawKey] || rawStats[item.key],
-								) || 0;
-							const isHP = item.key === "hp";
-							const config = statConfig[item.key];
+										return (
+											<div class="evo-step">
+												{node.method && (
+													<div class="evo-arrow">
+														<span>➔</span>
+														<small>
+															{node.method}
+														</small>
+													</div>
+												)}
 
-							const range50 = calcStat(val, isHP, 50);
-							const range100 = calcStat(val, isHP, 100);
+												<a
+													href={`/dex/${nodeId}`}
+													class="evo-card"
+												>
+													<img
+														src={imgProps.src}
+														alt={node.name}
+														onerror={
+															imgProps.onerror
+														}
+													/>
+													<span>{node.name}</span>
+												</a>
 
-							return (
-								<tr
-									style={`background-color: ${config.rowBg}; color: #000;`}
-								>
-									<td class="stat-name-cell">
-										<strong>{config.label}:</strong>
-									</td>
-									<td class="stat-value-cell">
-										<strong>{val}</strong>
-									</td>
-									<td class="stat-bar-cell">
-										<div class="bar-container">
-											<div
-												class="bar-fill"
-												style={`
-                                                        width: ${Math.min(100, (val / 255) * 100)}%;
-                                                        background-color: ${config.barBg};
-                                                        border: 1px solid ${config.border};
-                                                `}
-											></div>
-										</div>
-									</td>
-									<td class="stat-range-cell">
-										{range50.min} - {range50.max}
-									</td>
-									<td class="stat-range-cell">
-										{range100.min} - {range100.max}
-									</td>
-								</tr>
-							);
-						})}
-						<tr class="total-row">
-							<td class="stat-name-cell">
-								<strong>Total:</strong>
-							</td>
-							<td class="stat-value-cell">
-								<strong>{totalStats}</strong>
-							</td>
-							<td colspan="3"></td>
-						</tr>
-					</tbody>
-				</table>
+												{node.next &&
+													node.next.length > 0 && (
+														<div class="evo-branches">
+															{renderNodes(
+																node.next,
+															)}
+														</div>
+													)}
+											</div>
+										);
+									});
+								};
 
-				<div class="stats-notes">
-					<ul>
-						<li>
-							Minimum stats are calculated with 0 EVs, IVs of 0,
-							and (if applicable) a hindering nature.
-						</li>
-						<li>
-							Maximum stats are calculated with 252 EVs, IVs of
-							31, and (if applicable) a helpful nature.
-						</li>
-					</ul>
-				</div>
-			</div>
-		</div>
+								return renderNodes(pokemon.evolution);
+							})()}
+						</div>
+					</div>
+				)}
 
-		{movepool.length > 0 && (
-			<div class="movepool-section" style="margin-top: 2rem;">
-				<h2>Learned Moves</h2>
-				<table class="move-table">
-					<thead>
-						<tr class="move-header">
-							<th>Level</th>
-							<th>Move</th>
-							<th>Type</th>
-							<th>Category</th>
-							<th>Power</th>
-							<th>Accuracy</th>
-						</tr>
-					</thead>
-					<tbody>
-						{movepool.map((move: Move) => (
-							<tr class="move-row">
-								<td>
-									{move.level === 0 || move.level === 1
-										? "Evo / 1"
-										: move.level}
-								</td>
-								<td>{move.name}</td>
-								<td>
-									<span
-										class={`type-badge type-${move.type.toLowerCase()}`}
-									>
-										{move.type}
-									</span>
-								</td>
-								<td>
-									<span
-										class={`move-category ${move.category.toLowerCase()}`}
-									>
-										{move.category}
-									</span>
-								</td>
-								<td>{move.power}</td>
-								<td>{move.accuracy}</td>
+				<!-- Localisations -->
+				{pokemon?.location && pokemon.location.length > 0 && (
+					<div class="wiki-section">
+						<h2>Game Locations</h2>
+						<div class="location-list">
+							{pokemon.location.map((loc: any) => (
+								<span class="location-tag">{loc.name}</span>
+							))}
+						</div>
+					</div>
+				)}
+
+				<!-- Statistiques de Base -->
+				<div class="wiki-section">
+					<h2>Base Stats</h2>
+					<table class="stats-table">
+						<thead>
+							<tr>
+								<th colspan="3" class="header-stat">
+									Stat
+								</th>
+								<th colspan="2" class="header-range">
+									Range
+								</th>
 							</tr>
-						))}
+							<tr class="subheader-row">
+								<th colspan="3"></th>
+								<th>At Lv. 50</th>
+								<th>At Lv. 100</th>
+							</tr>
+						</thead>
+						<tbody>
+							{statsOrder.map((item) => {
+								const val =
+									Number(
+										rawStats[item.rawKey] ||
+											rawStats[item.key],
+									) || 0;
+								const isHP = item.key === "hp";
+								const config = statConfig[item.key];
+								const range50 = calcStat(val, isHP, 50);
+								const range100 = calcStat(val, isHP, 100);
+
+								return (
+									<tr
+										style={`background-color: ${config.rowBg}; color: #000;`}
+									>
+										<td class="stat-name-cell">
+											<strong>{config.label}:</strong>
+										</td>
+										<td class="stat-value-cell">
+											<strong>{val}</strong>
+										</td>
+										<td class="stat-bar-cell">
+											<div class="bar-container">
+												<div
+													class="bar-fill"
+													style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
+												></div>
+											</div>
+										</td>
+										<td class="stat-range-cell">
+											{range50.min === range50.max
+												? range50.min
+												: `${range50.min} - ${range50.max}`}
+										</td>
+										<td class="stat-range-cell">
+											{range100.min === range100.max
+												? range100.min
+												: `${range100.min} - ${range100.max}`}
+										</td>
+									</tr>
+								);
+							})}
+							<tr class="total-row">
+								<td class="stat-name-cell">
+									<strong>Total:</strong>
+								</td>
+								<td class="stat-value-cell">
+									<strong>{totalStats}</strong>
+								</td>
+								<td colspan="3"></td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="stats-notes">
+						<ul>
+							<li>
+								Minimum stats are calculated with 0 EVs, IVs of
+								0, and (if applicable) a hindering nature.
+							</li>
+							<li>
+								Maximum stats are calculated with 252 EVs, IVs
+								of 31, and (if applicable) a helpful nature.
+							</li>
+						</ul>
+					</div>
+				</div>
+
+				<!-- Attaques (Movepool) -->
+				{movepool.length > 0 && (
+					<div class="wiki-section">
+						<h2>Learned Moves</h2>
+						<table class="move-table">
+							<thead>
+								<tr>
+									<th>Level</th>
+									<th>Move</th>
+									<th>Type</th>
+									<th>Category</th>
+									<th>Power</th>
+									<th>Accuracy</th>
+								</tr>
+							</thead>
+							<tbody>
+								{movepool.map((move: Move) => (
+									<tr>
+										<td>
+											{move.level === 0 ||
+											move.level === 1
+												? "Evo / 1"
+												: move.level}
+										</td>
+										<td>{move.name}</td>
+										<td>
+											<span
+												class={`type-badge type-${move.type.toLowerCase()}`}
+											>
+												{move.type}
+											</span>
+										</td>
+										<td>
+											<span
+												class={`move-category ${move.category.toLowerCase()}`}
+											>
+												{move.category}
+											</span>
+										</td>
+										<td>{move.power}</td>
+										<td>{move.accuracy}</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				)}
+			</div>
+
+			<!-- Colonne de Droite (Infobox) -->
+			<aside class="wiki-infobox">
+				<div class="infobox-title">
+					<h1>{pokemonName}</h1>
+					<span class="pokemon-id">
+						#{String(pkmId).padStart(3, "0")}
+					</span>
+				</div>
+
+				<div class="infobox-sprite">
+					<img
+						src={mainImage.src}
+						alt={pokemonName}
+						onerror={mainImage.onerror}
+					/>
+				</div>
+
+				<table class="infobox-table">
+					<tbody>
+						<tr>
+							<th>Type</th>
+							<td>
+								<div class="types">
+									{pokemonTypes.map((t: string) => (
+										<span
+											class={`type-badge type-${String(t).toLowerCase()}`}
+										>
+											{t}
+										</span>
+									))}
+								</div>
+							</td>
+						</tr>
+						{pokemon?.abilities && (
+							<tr>
+								<th>Abilities</th>
+								<td>{pokemon.abilities.join(", ")}</td>
+							</tr>
+						)}
+						<tr>
+							<th>Gender</th>
+							<td>
+								{(() => {
+									const male = pokemon?.gender_ratio?.male;
+									const female =
+										pokemon?.gender_ratio?.female;
+
+									if (male === 100) {
+										return (
+											<span class="gender-male">
+												100% ♂
+											</span>
+										);
+									}
+									if (female === 100) {
+										return (
+											<span class="gender-female">
+												100% ♀
+											</span>
+										);
+									}
+									if (
+										typeof male === "number" &&
+										typeof female === "number"
+									) {
+										return (
+											<>
+												<span class="gender-male">
+													{male}% ♂
+												</span>
+												{" / "}
+												<span class="gender-female">
+													{female}% ♀
+												</span>
+											</>
+										);
+									}
+									return "N/A";
+								})()}
+							</td>
+						</tr>
+						{pokemon?.size && (
+							<tr>
+								<th>Height</th>
+								<td>{pokemon.size}</td>
+							</tr>
+						)}
+						{pokemon?.weight && (
+							<tr>
+								<th>Weight</th>
+								<td>{pokemon.weight}</td>
+							</tr>
+						)}
+						{pokemon?.catch_rate !== undefined && (
+							<tr>
+								<th>Catch Rate</th>
+								<td>{pokemon.catch_rate}</td>
+							</tr>
+						)}
+						{pokemon?.base_exp !== undefined && (
+							<tr>
+								<th>Base Exp</th>
+								<td>{pokemon.base_exp}</td>
+							</tr>
+						)}
+						{pokemon?.egg_groups && (
+							<tr>
+								<th>Egg Groups</th>
+								<td>{pokemon.egg_groups.join(", ")}</td>
+							</tr>
+						)}
+						{pokemon?.hatch_time !== undefined && (
+							<tr>
+								<th>Hatch Cycles</th>
+								<td>{pokemon.hatch_time}</td>
+							</tr>
+						)}
+						{pokemon?.ev && (
+							<tr>
+								<th>EV Yield</th>
+								<td>{pokemon.ev}</td>
+							</tr>
+						)}
 					</tbody>
 				</table>
-			</div>
-		)}
+			</aside>
+		</div>
 	</div>
 </BaseLayout>
