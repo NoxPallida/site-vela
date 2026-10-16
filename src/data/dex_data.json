@@ -2483,7 +2483,7 @@
         "number": "033",
         "types": ["Electric"],
         "abilities": [
-            "???"
+            "Electric Surge"
         ],
         "catch_rate": 75,
         "gender_ratio": {
@@ -2560,7 +2560,7 @@
         "number": "033",
         "types": ["Electric"],
         "abilities": [
-            "???"
+            "No Guard"
         ],
         "catch_rate": 75,
         "gender_ratio": {
@@ -3374,7 +3374,7 @@
         "number": "044",
         "types": ["Fairy", "Flying"],
         "abilities": [
-            "???"
+            "Magic Bounce"
         ],
         "catch_rate": 25,
         "gender_ratio": {
@@ -6312,7 +6312,7 @@
         "number": "085",
         "types": ["Grass", "Poison"],
         "abilities": [
-            "???"
+            "Innards Out"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -11021,7 +11021,7 @@
         "number": "148",
         "types": ["Water", "Psychic"],
         "abilities": [
-            "???"
+            "Huge Power"
         ],
         "catch_rate": 60,
         "gender_ratio": {
@@ -14555,7 +14555,7 @@
         "number": "192",
         "types": ["Dragon", "Flying"],
         "abilities": [
-            "???"
+            "Multiscale"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -18963,7 +18963,7 @@
         "number": "268",
         "types": ["Steel", "Flying"],
         "abilities": [
-            "???"
+            "Stalwart"
         ],
         "catch_rate": 25,
         "gender_ratio": {
@@ -26694,7 +26694,7 @@
         "number": "383",
         "types": ["Psychic", "Steel"],
         "abilities": [
-            "???"
+            "Levitate"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -26867,7 +26867,7 @@
         "number": "384",
         "types": ["Dark", "Ghost"],
         "abilities": [
-            "???"
+            "Sharpness"
         ],
         "catch_rate": 30,
         "gender_ratio": {
@@ -27221,7 +27221,7 @@
         "number": "387",
         "types": ["Ice", "Ghost"],
         "abilities": [
-            "???"
+            "Snow Warning"
         ],
         "catch_rate": 75,
         "gender_ratio": {
@@ -28430,7 +28430,7 @@
         "number": "404",
         "types": ["Fighting", "Flying"],
         "abilities": [
-            "???"
+            "Contrary"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -31126,7 +31126,7 @@
         "number": "444",
         "types": ["Dragon"],
         "abilities": [
-            "???"
+            "Levitate"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -31388,7 +31388,7 @@
         "number": "446",
         "types": ["Fighting", "Steel"],
         "abilities": [
-            "???"
+            "Aura Guard"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -33772,7 +33772,7 @@
         "number": "485",
         "types": ["Ground", "Steel"],
         "abilities": [
-            "???"
+            "Piercing Drill"
         ],
         "catch_rate": 60,
         "gender_ratio": {
@@ -34731,7 +34731,7 @@
         "number": "500",
         "types": ["Bug", "Poison"],
         "abilities": [
-            "???"
+            "Shell Armor"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -36074,7 +36074,7 @@
         "number": "516",
         "types": ["Dark", "Fighting"],
         "abilities": [
-            "???"
+            "Intimidate"
         ],
         "catch_rate": 90,
         "gender_ratio": {
@@ -38643,7 +38643,7 @@
         "number": "561",
         "types": ["Electric"],
         "abilities": [
-            "???"
+            "Eelevate"
         ],
         "catch_rate": 30,
         "gender_ratio": {
@@ -39003,7 +39003,7 @@
         "number": "566",
         "types": ["Ghost", "Fire"],
         "abilities": [
-            "???"
+            "Infiltrator"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -39924,7 +39924,7 @@
         "number": "580",
         "types": ["Ground", "Ghost"],
         "abilities": [
-            "???"
+            "Unseen Fist"
         ],
         "catch_rate": 90,
         "gender_ratio": {
@@ -41389,7 +41389,7 @@
         "number": "605",
         "types": ["Fire", "Normal"],
         "abilities": [
-            "???"
+            "Fire Mane"
         ],
         "catch_rate": 65,
         "gender_ratio": {
@@ -41609,7 +41609,7 @@
         "number": "607",
         "types": ["Fairy"],
         "abilities": [
-            "???"
+            "Fairy Aura"
         ],
         "catch_rate": 120,
         "gender_ratio": {
@@ -42186,7 +42186,7 @@
         "number": "615",
         "types": ["Psychic"],
         "abilities": [
-            "???"
+            "Trace"
         ],
         "catch_rate": 75,
         "gender_ratio": {
@@ -42797,7 +42797,7 @@
         "number": "624",
         "types": ["Dark", "Psychic"],
         "abilities": [
-            "???"
+            "Contrary"
         ],
         "catch_rate": 80,
         "gender_ratio": {
@@ -42972,7 +42972,7 @@
         "number": "626",
         "types": ["Rock", "Fighting"],
         "abilities": [
-            "???"
+            "Tough Claws"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -43147,7 +43147,7 @@
         "number": "628",
         "types": ["Poison", "Dragon"],
         "abilities": [
-            "???"
+            "Regenerator"
         ],
         "catch_rate": 55,
         "gender_ratio": {
@@ -43657,7 +43657,7 @@
         "number": "637",
         "types": ["Fighting", "Flying"],
         "abilities": [
-            "???"
+            "No Guard"
         ],
         "catch_rate": 100,
         "gender_ratio": {
@@ -45357,7 +45357,7 @@
         "number": "661",
         "types": ["Fighting", "Ice"],
         "abilities": [
-            "???"
+            "Iron Fist"
         ],
         "catch_rate": 60,
         "gender_ratio": {
@@ -47233,7 +47233,7 @@
         "number": "690",
         "types": ["Bug", "Steel"],
         "abilities": [
-            "???"
+            "Tough Claws"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -47865,7 +47865,7 @@
         "number": "700",
         "types": ["Normal", "Dragon"],
         "abilities": [
-            "???"
+            "Berserk"
         ],
         "catch_rate": 70,
         "gender_ratio": {
@@ -50834,7 +50834,7 @@
         "number": "752",
         "types": ["Fighting"],
         "abilities": [
-            "???"
+            "Defiant"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -54056,7 +54056,7 @@
         "number": "808",
         "types": ["Grass", "Fire"],
         "abilities": [
-            "???"
+            "Spicy Spray"
         ],
         "catch_rate": 75,
         "gender_ratio": {
@@ -55084,7 +55084,7 @@
         "number": "826",
         "types": ["Rock", "Poison"],
         "abilities": [
-            "???"
+            "Adaptability"
         ],
         "catch_rate": 25,
         "gender_ratio": {
@@ -55876,7 +55876,7 @@
         "number": "837",
         "types": ["Dragon", "Ice"],
         "abilities": [
-            "???"
+            "Thermal Exchange"
         ],
         "catch_rate": 10,
         "gender_ratio": {
@@ -55898,7 +55898,7 @@
             "special_defense": 101,
             "speed": 87
         },
-        "image": "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png",
+        "image": "../images/837_2.png",
         "dex_entry": "Baxcalibur's dorsal blade has grown even more massive thanks to Mega Evolution. This Pokémon fires beams from the hilt at its solar plexus.",
         "location": [
             { "name": "Home", "url": "../home.html" },
@@ -57236,7 +57236,7 @@
         "number": "853",
         "types": ["Grass", "Fairy"],
         "abilities": [
-            "???"
+            "Mega Sol"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -57747,7 +57747,7 @@
         "number": "859",
         "types": ["Water", "Dragon"],
         "abilities": [
-            "???"
+            "Dragonize"
         ],
         "catch_rate": 45,
         "gender_ratio": {
@@ -59439,7 +59439,7 @@
         "number": "883",
         "types": ["Fire", "Fighting"],
         "abilities": [
-            "???"
+            "Mold Breaker"
         ],
         "catch_rate": 45,
         "gender_ratio": {
