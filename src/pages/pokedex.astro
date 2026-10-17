@@ -1,107 +1,161 @@
 ---
+import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import pokedexData from "../data/dex_data.json";
 import { getPokemonName, getPokemonTypes } from "../utils/pokemon.js";
 import "../styles/dex_style.css";
 
 const MISSINGNO_IMG =
-	"https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
+    "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
 
-const rawList = Object.entries(pokedexData).map(
-	([key, value]: [string, any]) => ({
-		...value,
-		pkmId: value.id !== undefined ? String(value.id) : key,
-	}),
+// Importation dynamique de toutes les images locales dans src/assets/images/
+const localImages = import.meta.glob<{ default: ImageMetadata }>(
+    "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
 );
 
-const pokemonList = rawList.sort((a, b) => {
-	const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
-	const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
-	if (baseA !== baseB) return baseA - baseB;
-	return formA - formB;
+const rawList = Object.entries(pokedexData).map(
+    ([key, value]: [string, any]) => ({
+        ...value,
+        pkmId: value.id !== undefined ? String(value.id) : key,
+    }),
+);
+
+const sortedList = rawList.sort((a, b) => {
+    const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+    const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+    if (baseA !== baseB) return baseA - baseB;
+    return formA - formB;
 });
 
-function getImageProps(pkm: any, id: string) {
-	const hasJsonImage = pkm?.image && pkm.image !== MISSINGNO_IMG;
-	const src = hasJsonImage ? pkm.image : `/images/${id}.png`;
-	const onerror = hasJsonImage
-		? `if(!this.dataset.fallback){this.dataset.fallback='1';this.src='/images/${id}.png';}else{this.src='${MISSINGNO_IMG}';this.onerror=null;}`
-		: `this.onerror=null; this.src='${MISSINGNO_IMG}';`;
-	return { src, onerror };
+const EXTENSIONS = ["png", "jpg", "jpeg", "webp", "PNG"];
+
+// Fonction de résolution des sources d'images
+async function resolveImageSource(
+    pokemon: any,
+    id: string,
+): Promise<ImageMetadata | string> {
+    const rawImg = pokemon?.image;
+
+    // 1. Est-ce une URL externe valide (http/https) ?
+    const isRemoteUrl =
+        typeof rawImg === "string" &&
+        (rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
+        rawImg !== MISSINGNO_IMG;
+
+    if (isRemoteUrl) {
+        return rawImg;
+    }
+
+    // 2. Extrait le nom de fichier si le JSON contient un chemin relatif (ex: "../images/33_3.png")
+    let possibleNames: string[] = [];
+    if (typeof rawImg === "string" && rawImg.includes("/")) {
+        const filename = rawImg.split("/").pop();
+        if (filename) possibleNames.push(filename);
+    }
+
+    // Ajoute les variantes basées sur l'ID (ex: "33.3", "33_3", "033")
+    EXTENSIONS.forEach((ext) => {
+        possibleNames.push(`${id}.${ext}`);
+        possibleNames.push(`${id.replace(".", "_")}.${ext}`);
+        possibleNames.push(`${id.replace("_", ".")}.${ext}`);
+    });
+
+    // 3. Cherche dans src/assets/images/
+    for (const name of possibleNames) {
+        const fullPath = `/src/assets/images/${name}`;
+        if (fullPath in localImages) {
+            const mod = await localImages[fullPath]();
+            return mod.default;
+        }
+    }
+
+    // 4. Image de secours
+    return MISSINGNO_IMG;
 }
+
+// Résolution asynchrone pour l'ensemble des Pokémon
+const pokemonList = await Promise.all(
+    sortedList.map(async (pokemon) => {
+        const imageSrc = await resolveImageSource(pokemon, pokemon.pkmId);
+        return {
+            ...pokemon,
+            imageSrc,
+        };
+    }),
+);
 ---
 
 <BaseLayout title="Pokédex - Vela Pokédex">
-	<div class="pokedex-container">
-		<h1>Vela Pokédex</h1>
+    <div class="pokedex-container">
+        <h1>Vela Pokédex</h1>
 
-		<div class="search-bar">
-			<input
-				type="text"
-				id="search-input"
-				placeholder="Search a Pokémon..."
-			/>
-		</div>
+        <div class="search-bar">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search a Pokémon..."
+            />
+        </div>
 
-		<div class="pokemon-grid" id="pokemon-grid">
-			{pokemonList.map((pokemon) => {
-				const pokemonName = getPokemonName(pokemon);
-				const pokemonTypes = getPokemonTypes(pokemon);
-				const imgProps = getImageProps(pokemon, pokemon.pkmId);
+        <div class="pokemon-grid" id="pokemon-grid">
+            {pokemonList.map((pokemon) => {
+                const pokemonName = getPokemonName(pokemon);
+                const pokemonTypes = getPokemonTypes(pokemon);
 
-				return (
-					<a
-						href={`/dex/${pokemon.pkmId}`}
-						class="pokemon-card"
-						data-name={pokemonName.toLowerCase()}
-					>
-						<div class="card-header">
-							<span class="pokemon-id">
-								#{String(pokemon.pkmId).padStart(3, "0")}
-							</span>
-						</div>
-						<div class="card-image">
-							<img
-								src={imgProps.src}
-								alt={pokemonName}
-								width="96"
-								height="96"
-								loading="lazy"
-								onerror={imgProps.onerror}
-							/>
-						</div>
-						<div class="card-body">
-							<h3>{pokemonName}</h3>
-							<div class="types">
-								{pokemonTypes.map((t: string) => (
-									<span
-										class={`type-badge type-${String(t).toLowerCase()}`}
-									>
-										{t}
-									</span>
-								))}
-							</div>
-						</div>
-					</a>
-				);
-			})}
-		</div>
-	</div>
+                return (
+                    <a
+                        href={`/dex/${pokemon.pkmId}`}
+                        class="pokemon-card"
+                        data-name={pokemonName.toLowerCase()}
+                    >
+                        <div class="card-header">
+                            <span class="pokemon-id">
+                                #{String(pokemon.pkmId).padStart(3, "0")}
+                            </span>
+                        </div>
+                        <div class="card-image">
+                            <Image
+                                src={pokemon.imageSrc as any}
+                                alt={pokemonName}
+                                width={96}
+                                height={96}
+                                format="webp"
+                                quality={90}
+                                loading="lazy"
+                            />
+                        </div>
+                        <div class="card-body">
+                            <h3>{pokemonName}</h3>
+                            <div class="types">
+                                {pokemonTypes.map((t: string) => (
+                                    <span
+                                        class={`type-badge type-${String(t).toLowerCase()}`}
+                                    >
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </a>
+                );
+            })}
+        </div>
+    </div>
 </BaseLayout>
 
 <script>
-	const searchInput = document.getElementById(
-		"search-input",
-	) as HTMLInputElement;
-	const cards = document.querySelectorAll(".pokemon-card");
+    const searchInput = document.getElementById(
+        "search-input",
+    ) as HTMLInputElement;
+    const cards = document.querySelectorAll(".pokemon-card");
 
-	searchInput?.addEventListener("input", (e) => {
-		const value = (e.target as HTMLInputElement).value.toLowerCase();
-		cards.forEach((card) => {
-			const name = card.getAttribute("data-name") || "";
-			(card as HTMLElement).style.display = name.includes(value)
-				? "flex"
-				: "none";
-		});
-	});
+    searchInput?.addEventListener("input", (e) => {
+        const value = (e.target as HTMLInputElement).value.toLowerCase();
+        cards.forEach((card) => {
+            const name = card.getAttribute("data-name") || "";
+            (card as HTMLElement).style.display = name.includes(value)
+                ? "flex"
+                : "none";
+        });
+    });
 </script>

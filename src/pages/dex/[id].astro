@@ -1,32 +1,33 @@
 ---
+import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import pokedexData from "../../data/dex_data.json";
 import {
-	getPokemonName,
-	getPokemonTypes,
-	extractStats,
-	calcStat,
-	getPokemonMovepool,
+    getPokemonName,
+    getPokemonTypes,
+    extractStats,
+    calcStat,
+    getPokemonMovepool,
 } from "../../utils/pokemon.js";
 import "../../styles/dex_style.css";
 
 interface Move {
-	level: number | string;
-	name: string;
-	type: string;
-	category: string;
-	power: number | string;
-	accuracy: number | string;
+    level: number | string;
+    name: string;
+    type: string;
+    category: string;
+    power: number | string;
+    accuracy: number | string;
 }
 
 export async function getStaticPaths() {
-	return Object.entries(pokedexData).map(([key, value]: [string, any]) => {
-		const pkmId = value.id !== undefined ? String(value.id) : key;
-		return {
-			params: { id: pkmId },
-			props: { pokemon: value, pkmId },
-		};
-	});
+    return Object.entries(pokedexData).map(([key, value]: [string, any]) => {
+        const pkmId = value.id !== undefined ? String(value.id) : key;
+        return {
+            params: { id: pkmId },
+            props: { pokemon: value, pkmId },
+        };
+    });
 }
 
 const { pokemon, pkmId } = Astro.props;
@@ -35,493 +36,556 @@ const pokemonTypes = getPokemonTypes(pokemon);
 const rawStats = extractStats(pokemon);
 const movepool: Move[] = getPokemonMovepool(pkmId);
 
+const MISSINGNO_IMG =
+    "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
+
+// Importation dynamique des images locales dans src/assets/images/
+const localImages = import.meta.glob<{ default: ImageMetadata }>(
+    "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
+);
+
+const EXTENSIONS = ["png", "jpg", "jpeg", "webp", "PNG"];
+
+async function resolveImageSource(
+    pkm: any,
+    id: string,
+): Promise<ImageMetadata | string> {
+    const rawImg = pkm?.image;
+
+    // 1. URL externe valide (http/https)
+    const isRemoteUrl =
+        typeof rawImg === "string" &&
+        (rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
+        rawImg !== MISSINGNO_IMG;
+
+    if (isRemoteUrl) {
+        return rawImg;
+    }
+
+    // 2. Traitement des chemins relatifs du JSON
+    let possibleNames: string[] = [];
+    if (typeof rawImg === "string" && rawImg.includes("/")) {
+        const filename = rawImg.split("/").pop();
+        if (filename) possibleNames.push(filename);
+    }
+
+    // Noms basés sur l'ID (ex: 33.3, 33_3)
+    EXTENSIONS.forEach((ext) => {
+        possibleNames.push(`${id}.${ext}`);
+        possibleNames.push(`${id.replace(".", "_")}.${ext}`);
+        possibleNames.push(`${id.replace("_", ".")}.${ext}`);
+    });
+
+    // 3. Recherche dans src/assets/images/
+    for (const name of possibleNames) {
+        const fullPath = `/src/assets/images/${name}`;
+        if (fullPath in localImages) {
+            const mod = await localImages[fullPath]();
+            return mod.default;
+        }
+    }
+
+    // 4. Image de secours
+    return MISSINGNO_IMG;
+}
+
+async function resolveEvoTree(nodes: any[]): Promise<any[]> {
+    if (!nodes || !nodes.length) return [];
+    return Promise.all(
+        nodes.map(async (node: any) => {
+            const nodeId = node.url ? node.url.split("=")[1] : pkmId;
+            const imageSrc = await resolveImageSource(node, nodeId);
+            const next = node.next
+                ? await resolveEvoTree(node.next)
+                : undefined;
+            return {
+                ...node,
+                nodeId,
+                imageSrc,
+                next,
+            };
+        }),
+    );
+}
+
 const pokemonList = Object.entries(pokedexData)
-	.map(([key, value]: [string, any]) => ({
-		...value,
-		pkmId: value.id !== undefined ? String(value.id) : key,
-	}))
-	.sort((a, b) => {
-		const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
-		const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
-		if (baseA !== baseB) return baseA - baseB;
-		return formA - formB;
-	});
+    .map(([key, value]: [string, any]) => ({
+        ...value,
+        pkmId: value.id !== undefined ? String(value.id) : key,
+    }))
+    .sort((a, b) => {
+        const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+        const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+        if (baseA !== baseB) return baseA - baseB;
+        return formA - formB;
+    });
 
 const currentIndex = pokemonList.findIndex((p) => p.pkmId === pkmId);
 const prevPokemon = currentIndex > 0 ? pokemonList[currentIndex - 1] : null;
 const nextPokemon =
-	currentIndex < pokemonList.length - 1
-		? pokemonList[currentIndex + 1]
-		: null;
+    currentIndex < pokemonList.length - 1
+        ? pokemonList[currentIndex + 1]
+        : null;
 
 const prevName = prevPokemon ? getPokemonName(prevPokemon) : "";
 const nextName = nextPokemon ? getPokemonName(nextPokemon) : "";
 
-// --- GESTION DES IMAGES ---
-const MISSINGNO_IMG =
-	"https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
-
-function getImageProps(pkm: any, id: string) {
-	const hasJsonImage = pkm?.image && pkm.image !== MISSINGNO_IMG;
-	const src = hasJsonImage ? pkm.image : `/images/${id}.png`;
-	const onerror = hasJsonImage
-		? `if(!this.dataset.fallback){this.dataset.fallback='1';this.src='/images/${id}.png';}else{this.src='${MISSINGNO_IMG}';this.onerror=null;}`
-		: `this.onerror=null; this.src='${MISSINGNO_IMG}';`;
-	return { src, onerror };
-}
-
-const mainImage = getImageProps(pokemon, pkmId);
-const prevImage = prevPokemon
-	? getImageProps(prevPokemon, prevPokemon.pkmId)
-	: null;
-const nextImage = nextPokemon
-	? getImageProps(nextPokemon, nextPokemon.pkmId)
-	: null;
+// Résolution des images
+const mainImageSource = await resolveImageSource(pokemon, pkmId);
+const prevImageSource = prevPokemon
+    ? await resolveImageSource(prevPokemon, prevPokemon.pkmId)
+    : null;
+const nextImageSource = nextPokemon
+    ? await resolveImageSource(nextPokemon, nextPokemon.pkmId)
+    : null;
+const resolvedEvolutions = pokemon?.evolution
+    ? await resolveEvoTree(pokemon.evolution)
+    : [];
 
 const statConfig: Record<
-	string,
-	{ label: string; rowBg: string; barBg: string; border: string }
+    string,
+    { label: string; rowBg: string; barBg: string; border: string }
 > = {
-	hp: { label: "HP", rowBg: "#d5f795", barBg: "#a8f02f", border: "#72a818" },
-	attack: {
-		label: "Attack",
-		rowBg: "#fce893",
-		barBg: "#f8d030",
-		border: "#b89818",
-	},
-	defense: {
-		label: "Defense",
-		rowBg: "#fbc396",
-		barBg: "#f08030",
-		border: "#b55210",
-	},
-	special_attack: {
-		label: "Sp. Atk",
-		rowBg: "#a4d8fa",
-		barBg: "#58abf6",
-		border: "#2272c3",
-	},
-	special_defense: {
-		label: "Sp. Def",
-		rowBg: "#a3b2f7",
-		barBg: "#5070dd",
-		border: "#1f38a1",
-	},
-	speed: {
-		label: "Speed",
-		rowBg: "#f7a1c8",
-		barBg: "#e85098",
-		border: "#a61d62",
-	},
+    hp: { label: "HP", rowBg: "#d5f795", barBg: "#a8f02f", border: "#72a818" },
+    attack: {
+        label: "Attack",
+        rowBg: "#fce893",
+        barBg: "#f8d030",
+        border: "#b89818",
+    },
+    defense: {
+        label: "Defense",
+        rowBg: "#fbc396",
+        barBg: "#f08030",
+        border: "#b55210",
+    },
+    special_attack: {
+        label: "Sp. Atk",
+        rowBg: "#a4d8fa",
+        barBg: "#58abf6",
+        border: "#2272c3",
+    },
+    special_defense: {
+        label: "Sp. Def",
+        rowBg: "#a3b2f7",
+        barBg: "#5070dd",
+        border: "#1f38a1",
+    },
+    speed: {
+        label: "Speed",
+        rowBg: "#f7a1c8",
+        barBg: "#e85098",
+        border: "#a61d62",
+    },
 };
 
 const statsOrder = [
-	{ key: "hp", rawKey: "hp" },
-	{ key: "attack", rawKey: "attack" },
-	{ key: "defense", rawKey: "defense" },
-	{ key: "special_attack", rawKey: "special_attack" },
-	{ key: "special_defense", rawKey: "special_defense" },
-	{ key: "speed", rawKey: "speed" },
+    { key: "hp", rawKey: "hp" },
+    { key: "attack", rawKey: "attack" },
+    { key: "defense", rawKey: "defense" },
+    { key: "special_attack", rawKey: "special_attack" },
+    { key: "special_defense", rawKey: "special_defense" },
+    { key: "speed", rawKey: "speed" },
 ];
 
 const totalStats = statsOrder.reduce((sum, item) => {
-	return sum + (Number(rawStats[item.rawKey] || rawStats[item.key]) || 0);
+    return sum + (Number(rawStats[item.rawKey] || rawStats[item.key]) || 0);
 }, 0);
 ---
 
 <BaseLayout title={`${pokemonName} - Vela Pokédex`}>
-	<div class="dex-detail-container">
-		<!-- Navigation supérieure -->
-		<nav class="dex-nav-bar">
-			{prevPokemon && prevImage ? (
-				<a href={`/dex/${prevPokemon.pkmId}`} class="nav-btn prev-btn">
-					←
-					<img
-						src={prevImage.src}
-						alt={prevName}
-						width="16"
-						height="16"
-						class="nav-icon"
-						onerror={prevImage.onerror}
-					/>
-					<span>
-						#{String(prevPokemon.pkmId).padStart(3, "0")} {prevName}
-					</span>
-				</a>
-			) : (
-				<div class="nav-placeholder"></div>
-			)}
+    <div class="dex-detail-container">
+        <!-- Navigation supérieure -->
+        <nav class="dex-nav-bar">
+            {prevPokemon && prevImageSource ? (
+                <a href={`/dex/${prevPokemon.pkmId}`} class="nav-btn prev-btn">
+                    ←
+                    <Image
+                        src={prevImageSource as any}
+                        alt={prevName}
+                        width={16}
+                        height={16}
+                        format="webp"
+                        quality={90}
+                        class="nav-icon"
+                    />
+                    <span>
+                        #{String(prevPokemon.pkmId).padStart(3, "0")} {prevName}
+                    </span>
+                </a>
+            ) : (
+                <div class="nav-placeholder"></div>
+            )}
 
-			<a href="/pokedex" class="back-link">
-				Pokédex
-			</a>
+            <a href="/pokedex" class="back-link">
+                Pokédex
+            </a>
 
-			{nextPokemon && nextImage ? (
-				<a href={`/dex/${nextPokemon.pkmId}`} class="nav-btn next-btn">
-					<span>
-						{nextName} #{String(nextPokemon.pkmId).padStart(3, "0")}
-					</span>
-					<img
-						src={nextImage.src}
-						alt={nextName}
-						width="16"
-						height="16"
-						class="nav-icon"
-						onerror={nextImage.onerror}
-					/>
-					→
-				</a>
-			) : (
-				<div class="nav-placeholder"></div>
-			)}
-		</nav>
+            {nextPokemon && nextImageSource ? (
+                <a href={`/dex/${nextPokemon.pkmId}`} class="nav-btn next-btn">
+                    <span>
+                        {nextName} #{String(nextPokemon.pkmId).padStart(3, "0")}
+                    </span>
+                    <Image
+                        src={nextImageSource as any}
+                        alt={nextName}
+                        width={16}
+                        height={16}
+                        format="webp"
+                        quality={90}
+                        class="nav-icon"
+                    />
+                    →
+                </a>
+            ) : (
+                <div class="nav-placeholder"></div>
+            )}
+        </nav>
 
-		<!-- Layout Wiki Principal -->
-		<div class="wiki-layout">
-			<!-- Colonne de Gauche -->
-			<div class="main-content">
-				<!-- Description Pokédex -->
-				{pokemon?.dex_entry && (
-					<div class="wiki-section">
-						<h2>Pokédex Entry</h2>
-						<p class="dex-entry-text">« {pokemon.dex_entry} »</p>
-					</div>
-				)}
+        <!-- Layout Wiki Principal -->
+        <div class="wiki-layout">
+            <!-- Colonne de Gauche -->
+            <div class="main-content">
+                <!-- Description Pokédex -->
+                {pokemon?.dex_entry && (
+                    <div class="wiki-section">
+                        <h2>Pokédex Entry</h2>
+                        <p class="dex-entry-text">« {pokemon.dex_entry} »</p>
+                    </div>
+                )}
 
-				<!-- Chaîne d'évolution avec embranchements récursifs -->
-				{pokemon?.evolution && pokemon.evolution.length > 0 && (
-					<div class="wiki-section">
-						<h2>Evolutions</h2>
-						<div class="evolution-chain">
-							{(() => {
-								const renderNodes = (nodes: any[]) => {
-									return nodes.map((node: any) => {
-										const nodeId = node.url
-											? node.url.split("=")[1]
-											: pkmId;
-										const imgProps = getImageProps(
-											node,
-											nodeId,
-										);
+                <!-- Chaîne d'évolution avec embranchements récursifs -->
+                {resolvedEvolutions && resolvedEvolutions.length > 0 && (
+                    <div class="wiki-section">
+                        <h2>Evolutions</h2>
+                        <div class="evolution-chain">
+                            {(() => {
+                                const renderNodes = (nodes: any[]) => {
+                                    return nodes.map((node: any) => {
+                                        return (
+                                            <div class="evo-step">
+                                                {node.method && (
+                                                    <div class="evo-arrow">
+                                                        <span>➔</span>
+                                                        <small>
+                                                            {node.method}
+                                                        </small>
+                                                    </div>
+                                                )}
 
-										return (
-											<div class="evo-step">
-												{node.method && (
-													<div class="evo-arrow">
-														<span>➔</span>
-														<small>
-															{node.method}
-														</small>
-													</div>
-												)}
+                                                <a
+                                                    href={`/dex/${node.nodeId}`}
+                                                    class="evo-card"
+                                                >
+                                                    <Image
+                                                        src={
+                                                            node.imageSrc as any
+                                                        }
+                                                        alt={node.name}
+                                                        width={80}
+                                                        height={80}
+                                                        format="webp"
+                                                        quality={90}
+                                                    />
+                                                    <span>{node.name}</span>
+                                                </a>
 
-												<a
-													href={`/dex/${nodeId}`}
-													class="evo-card"
-												>
-													<img
-														src={imgProps.src}
-														alt={node.name}
-														onerror={
-															imgProps.onerror
-														}
-													/>
-													<span>{node.name}</span>
-												</a>
+                                                {node.next &&
+                                                    node.next.length > 0 && (
+                                                        <div class="evo-branches">
+                                                            {renderNodes(
+                                                                node.next,
+                                                            )}
+                                                        </div>
+                                                    )}
+                                            </div>
+                                        );
+                                    });
+                                };
 
-												{node.next &&
-													node.next.length > 0 && (
-														<div class="evo-branches">
-															{renderNodes(
-																node.next,
-															)}
-														</div>
-													)}
-											</div>
-										);
-									});
-								};
+                                return renderNodes(resolvedEvolutions);
+                            })()}
+                        </div>
+                    </div>
+                )}
 
-								return renderNodes(pokemon.evolution);
-							})()}
-						</div>
-					</div>
-				)}
+                <!-- Localisations -->
+                {pokemon?.location && pokemon.location.length > 0 && (
+                    <div class="wiki-section">
+                        <h2>Game Locations</h2>
+                        <div class="location-list">
+                            {pokemon.location.map((loc: any) => (
+                                <span class="location-tag">{loc.name}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-				<!-- Localisations -->
-				{pokemon?.location && pokemon.location.length > 0 && (
-					<div class="wiki-section">
-						<h2>Game Locations</h2>
-						<div class="location-list">
-							{pokemon.location.map((loc: any) => (
-								<span class="location-tag">{loc.name}</span>
-							))}
-						</div>
-					</div>
-				)}
+                <!-- Statistiques de Base -->
+                <div class="wiki-section">
+                    <h2>Base Stats</h2>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" class="header-stat">
+                                    Stat
+                                </th>
+                                <th colspan="2" class="header-range">
+                                    Range
+                                </th>
+                            </tr>
+                            <tr class="subheader-row">
+                                <th colspan="3"></th>
+                                <th>At Lv. 50</th>
+                                <th>At Lv. 100</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {statsOrder.map((item) => {
+                                const val =
+                                    Number(
+                                        rawStats[item.rawKey] ||
+                                            rawStats[item.key],
+                                    ) || 0;
+                                const isHP = item.key === "hp";
+                                const config = statConfig[item.key];
+                                const range50 = calcStat(val, isHP, 50);
+                                const range100 = calcStat(val, isHP, 100);
 
-				<!-- Statistiques de Base -->
-				<div class="wiki-section">
-					<h2>Base Stats</h2>
-					<table class="stats-table">
-						<thead>
-							<tr>
-								<th colspan="3" class="header-stat">
-									Stat
-								</th>
-								<th colspan="2" class="header-range">
-									Range
-								</th>
-							</tr>
-							<tr class="subheader-row">
-								<th colspan="3"></th>
-								<th>At Lv. 50</th>
-								<th>At Lv. 100</th>
-							</tr>
-						</thead>
-						<tbody>
-							{statsOrder.map((item) => {
-								const val =
-									Number(
-										rawStats[item.rawKey] ||
-											rawStats[item.key],
-									) || 0;
-								const isHP = item.key === "hp";
-								const config = statConfig[item.key];
-								const range50 = calcStat(val, isHP, 50);
-								const range100 = calcStat(val, isHP, 100);
+                                return (
+                                    <tr
+                                        style={`background-color: ${config.rowBg}; color: #000;`}
+                                    >
+                                        <td class="stat-name-cell">
+                                            <strong>{config.label}:</strong>
+                                        </td>
+                                        <td class="stat-value-cell">
+                                            <strong>{val}</strong>
+                                        </td>
+                                        <td class="stat-bar-cell">
+                                            <div class="bar-container">
+                                                <div
+                                                    class="bar-fill"
+                                                    style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
+                                                ></div>
+                                            </div>
+                                        </td>
+                                        <td class="stat-range-cell">
+                                            {range50.min === range50.max
+                                                ? range50.min
+                                                : `${range50.min} - ${range50.max}`}
+                                        </td>
+                                        <td class="stat-range-cell">
+                                            {range100.min === range100.max
+                                                ? range100.min
+                                                : `${range100.min} - ${range100.max}`}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            <tr class="total-row">
+                                <td class="stat-name-cell">
+                                    <strong>Total:</strong>
+                                </td>
+                                <td class="stat-value-cell">
+                                    <strong>{totalStats}</strong>
+                                </td>
+                                <td colspan="3"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="stats-notes">
+                        <ul>
+                            <li>
+                                Minimum stats are calculated with 0 EVs, IVs of
+                                0, and (if applicable) a hindering nature.
+                            </li>
+                            <li>
+                                Maximum stats are calculated with 252 EVs, IVs
+                                of 31, and (if applicable) a helpful nature.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
 
-								return (
-									<tr
-										style={`background-color: ${config.rowBg}; color: #000;`}
-									>
-										<td class="stat-name-cell">
-											<strong>{config.label}:</strong>
-										</td>
-										<td class="stat-value-cell">
-											<strong>{val}</strong>
-										</td>
-										<td class="stat-bar-cell">
-											<div class="bar-container">
-												<div
-													class="bar-fill"
-													style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
-												></div>
-											</div>
-										</td>
-										<td class="stat-range-cell">
-											{range50.min === range50.max
-												? range50.min
-												: `${range50.min} - ${range50.max}`}
-										</td>
-										<td class="stat-range-cell">
-											{range100.min === range100.max
-												? range100.min
-												: `${range100.min} - ${range100.max}`}
-										</td>
-									</tr>
-								);
-							})}
-							<tr class="total-row">
-								<td class="stat-name-cell">
-									<strong>Total:</strong>
-								</td>
-								<td class="stat-value-cell">
-									<strong>{totalStats}</strong>
-								</td>
-								<td colspan="3"></td>
-							</tr>
-						</tbody>
-					</table>
-					<div class="stats-notes">
-						<ul>
-							<li>
-								Minimum stats are calculated with 0 EVs, IVs of
-								0, and (if applicable) a hindering nature.
-							</li>
-							<li>
-								Maximum stats are calculated with 252 EVs, IVs
-								of 31, and (if applicable) a helpful nature.
-							</li>
-						</ul>
-					</div>
-				</div>
+                <!-- Attaques (Movepool) -->
+                {movepool.length > 0 && (
+                    <div class="wiki-section">
+                        <h2>Learned Moves</h2>
+                        <table class="move-table">
+                            <thead>
+                                <tr>
+                                    <th>Level</th>
+                                    <th>Move</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Power</th>
+                                    <th>Accuracy</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {movepool.map((move: Move) => (
+                                    <tr>
+                                        <td>
+                                            {move.level === 0 ||
+                                            move.level === 1
+                                                ? "Evo / 1"
+                                                : move.level}
+                                        </td>
+                                        <td>{move.name}</td>
+                                        <td>
+                                            <span
+                                                class={`type-badge type-${move.type.toLowerCase()}`}
+                                            >
+                                                {move.type}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class={`move-category ${move.category.toLowerCase()}`}
+                                            >
+                                                {move.category}
+                                            </span>
+                                        </td>
+                                        <td>{move.power}</td>
+                                        <td>{move.accuracy}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
 
-				<!-- Attaques (Movepool) -->
-				{movepool.length > 0 && (
-					<div class="wiki-section">
-						<h2>Learned Moves</h2>
-						<table class="move-table">
-							<thead>
-								<tr>
-									<th>Level</th>
-									<th>Move</th>
-									<th>Type</th>
-									<th>Category</th>
-									<th>Power</th>
-									<th>Accuracy</th>
-								</tr>
-							</thead>
-							<tbody>
-								{movepool.map((move: Move) => (
-									<tr>
-										<td>
-											{move.level === 0 ||
-											move.level === 1
-												? "Evo / 1"
-												: move.level}
-										</td>
-										<td>{move.name}</td>
-										<td>
-											<span
-												class={`type-badge type-${move.type.toLowerCase()}`}
-											>
-												{move.type}
-											</span>
-										</td>
-										<td>
-											<span
-												class={`move-category ${move.category.toLowerCase()}`}
-											>
-												{move.category}
-											</span>
-										</td>
-										<td>{move.power}</td>
-										<td>{move.accuracy}</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				)}
-			</div>
+            <!-- Colonne de Droite (Infobox) -->
+            <aside class="wiki-infobox">
+                <div class="infobox-title">
+                    <h1>{pokemonName}</h1>
+                    <span class="pokemon-id">
+                        #{String(pkmId).padStart(3, "0")}
+                    </span>
+                </div>
 
-			<!-- Colonne de Droite (Infobox) -->
-			<aside class="wiki-infobox">
-				<div class="infobox-title">
-					<h1>{pokemonName}</h1>
-					<span class="pokemon-id">
-						#{String(pkmId).padStart(3, "0")}
-					</span>
-				</div>
+                <div class="infobox-sprite">
+                    <Image
+                        src={mainImageSource as any}
+                        alt={pokemonName}
+                        width={160}
+                        height={160}
+                        format="webp"
+                        quality={90}
+                    />
+                </div>
 
-				<div class="infobox-sprite">
-					<img
-						src={mainImage.src}
-						alt={pokemonName}
-						onerror={mainImage.onerror}
-					/>
-				</div>
+                <table class="infobox-table">
+                    <tbody>
+                        <tr>
+                            <th>Type</th>
+                            <td>
+                                <div class="types">
+                                    {pokemonTypes.map((t: string) => (
+                                        <span
+                                            class={`type-badge type-${String(t).toLowerCase()}`}
+                                        >
+                                            {t}
+                                        </span>
+                                    ))}
+                                </div>
+                            </td>
+                        </tr>
+                        {pokemon?.abilities && (
+                            <tr>
+                                <th>Abilities</th>
+                                <td>{pokemon.abilities.join(", ")}</td>
+                            </tr>
+                        )}
+                        <tr>
+                            <th>Gender</th>
+                            <td>
+                                {(() => {
+                                    const male = pokemon?.gender_ratio?.male;
+                                    const female =
+                                        pokemon?.gender_ratio?.female;
 
-				<table class="infobox-table">
-					<tbody>
-						<tr>
-							<th>Type</th>
-							<td>
-								<div class="types">
-									{pokemonTypes.map((t: string) => (
-										<span
-											class={`type-badge type-${String(t).toLowerCase()}`}
-										>
-											{t}
-										</span>
-									))}
-								</div>
-							</td>
-						</tr>
-						{pokemon?.abilities && (
-							<tr>
-								<th>Abilities</th>
-								<td>{pokemon.abilities.join(", ")}</td>
-							</tr>
-						)}
-						<tr>
-							<th>Gender</th>
-							<td>
-								{(() => {
-									const male = pokemon?.gender_ratio?.male;
-									const female =
-										pokemon?.gender_ratio?.female;
-
-									if (male === 100) {
-										return (
-											<span class="gender-male">
-												100% ♂
-											</span>
-										);
-									}
-									if (female === 100) {
-										return (
-											<span class="gender-female">
-												100% ♀
-											</span>
-										);
-									}
-									if (
-										typeof male === "number" &&
-										typeof female === "number"
-									) {
-										return (
-											<>
-												<span class="gender-male">
-													{male}% ♂
-												</span>
-												{" / "}
-												<span class="gender-female">
-													{female}% ♀
-												</span>
-											</>
-										);
-									}
-									return "N/A";
-								})()}
-							</td>
-						</tr>
-						{pokemon?.size && (
-							<tr>
-								<th>Height</th>
-								<td>{pokemon.size}</td>
-							</tr>
-						)}
-						{pokemon?.weight && (
-							<tr>
-								<th>Weight</th>
-								<td>{pokemon.weight}</td>
-							</tr>
-						)}
-						{pokemon?.catch_rate !== undefined && (
-							<tr>
-								<th>Catch Rate</th>
-								<td>{pokemon.catch_rate}</td>
-							</tr>
-						)}
-						{pokemon?.base_exp !== undefined && (
-							<tr>
-								<th>Base Exp</th>
-								<td>{pokemon.base_exp}</td>
-							</tr>
-						)}
-						{pokemon?.egg_groups && (
-							<tr>
-								<th>Egg Groups</th>
-								<td>{pokemon.egg_groups.join(", ")}</td>
-							</tr>
-						)}
-						{pokemon?.hatch_time !== undefined && (
-							<tr>
-								<th>Hatch Cycles</th>
-								<td>{pokemon.hatch_time}</td>
-							</tr>
-						)}
-						{pokemon?.ev && (
-							<tr>
-								<th>EV Yield</th>
-								<td>{pokemon.ev}</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</aside>
-		</div>
-	</div>
+                                    if (male === 100) {
+                                        return (
+                                            <span class="gender-male">
+                                                100% ♂
+                                            </span>
+                                        );
+                                    }
+                                    if (female === 100) {
+                                        return (
+                                            <span class="gender-female">
+                                                100% ♀
+                                            </span>
+                                        );
+                                    }
+                                    if (
+                                        typeof male === "number" &&
+                                        typeof female === "number"
+                                    ) {
+                                        return (
+                                            <>
+                                                <span class="gender-male">
+                                                    {male}% ♂
+                                                </span>
+                                                {" / "}
+                                                <span class="gender-female">
+                                                    {female}% ♀
+                                                </span>
+                                            </>
+                                        );
+                                    }
+                                    return "N/A";
+                                })()}
+                            </td>
+                        </tr>
+                        {pokemon?.size && (
+                            <tr>
+                                <th>Height</th>
+                                <td>{pokemon.size}</td>
+                            </tr>
+                        )}
+                        {pokemon?.weight && (
+                            <tr>
+                                <th>Weight</th>
+                                <td>{pokemon.weight}</td>
+                            </tr>
+                        )}
+                        {pokemon?.catch_rate !== undefined && (
+                            <tr>
+                                <th>Catch Rate</th>
+                                <td>{pokemon.catch_rate}</td>
+                            </tr>
+                        )}
+                        {pokemon?.base_exp !== undefined && (
+                            <tr>
+                                <th>Base Exp</th>
+                                <td>{pokemon.base_exp}</td>
+                            </tr>
+                        )}
+                        {pokemon?.egg_groups && (
+                            <tr>
+                                <th>Egg Groups</th>
+                                <td>{pokemon.egg_groups.join(", ")}</td>
+                            </tr>
+                        )}
+                        {pokemon?.hatch_time !== undefined && (
+                            <tr>
+                                <th>Hatch Cycles</th>
+                                <td>{pokemon.hatch_time}</td>
+                            </tr>
+                        )}
+                        {pokemon?.ev && (
+                            <tr>
+                                <th>EV Yield</th>
+                                <td>{pokemon.ev}</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </aside>
+        </div>
+    </div>
 </BaseLayout>
