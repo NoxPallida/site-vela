@@ -39,7 +39,6 @@ const movepool: Move[] = getPokemonMovepool(pkmId);
 const MISSINGNO_IMG =
     "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
 
-// Importation dynamique des images locales dans src/assets/images/
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
     "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
 );
@@ -52,7 +51,6 @@ async function resolveImageSource(
 ): Promise<ImageMetadata | string> {
     const rawImg = pkm?.image;
 
-    // 1. URL externe valide (http/https)
     const isRemoteUrl =
         typeof rawImg === "string" &&
         (rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
@@ -62,21 +60,18 @@ async function resolveImageSource(
         return rawImg;
     }
 
-    // 2. Traitement des chemins relatifs du JSON
     let possibleNames: string[] = [];
     if (typeof rawImg === "string" && rawImg.includes("/")) {
         const filename = rawImg.split("/").pop();
         if (filename) possibleNames.push(filename);
     }
 
-    // Noms basés sur l'ID (ex: 33.3, 33_3)
     EXTENSIONS.forEach((ext) => {
         possibleNames.push(`${id}.${ext}`);
         possibleNames.push(`${id.replace(".", "_")}.${ext}`);
         possibleNames.push(`${id.replace("_", ".")}.${ext}`);
     });
 
-    // 3. Recherche dans src/assets/images/
     for (const name of possibleNames) {
         const fullPath = `/src/assets/images/${name}`;
         if (fullPath in localImages) {
@@ -85,7 +80,6 @@ async function resolveImageSource(
         }
     }
 
-    // 4. Image de secours
     return MISSINGNO_IMG;
 }
 

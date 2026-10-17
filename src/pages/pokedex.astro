@@ -8,7 +8,6 @@ import "../styles/dex_style.css";
 const MISSINGNO_IMG =
     "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
 
-// Importation dynamique de toutes les images locales dans src/assets/images/
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
     "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
 );
@@ -29,14 +28,12 @@ const sortedList = rawList.sort((a, b) => {
 
 const EXTENSIONS = ["png", "jpg", "jpeg", "webp", "PNG"];
 
-// Fonction de résolution des sources d'images
 async function resolveImageSource(
     pokemon: any,
     id: string,
 ): Promise<ImageMetadata | string> {
     const rawImg = pokemon?.image;
 
-    // 1. Est-ce une URL externe valide (http/https) ?
     const isRemoteUrl =
         typeof rawImg === "string" &&
         (rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
@@ -46,21 +43,18 @@ async function resolveImageSource(
         return rawImg;
     }
 
-    // 2. Extrait le nom de fichier si le JSON contient un chemin relatif (ex: "../images/33_3.png")
     let possibleNames: string[] = [];
     if (typeof rawImg === "string" && rawImg.includes("/")) {
         const filename = rawImg.split("/").pop();
         if (filename) possibleNames.push(filename);
     }
 
-    // Ajoute les variantes basées sur l'ID (ex: "33.3", "33_3", "033")
     EXTENSIONS.forEach((ext) => {
         possibleNames.push(`${id}.${ext}`);
         possibleNames.push(`${id.replace(".", "_")}.${ext}`);
         possibleNames.push(`${id.replace("_", ".")}.${ext}`);
     });
 
-    // 3. Cherche dans src/assets/images/
     for (const name of possibleNames) {
         const fullPath = `/src/assets/images/${name}`;
         if (fullPath in localImages) {
@@ -69,11 +63,9 @@ async function resolveImageSource(
         }
     }
 
-    // 4. Image de secours
     return MISSINGNO_IMG;
 }
 
-// Résolution asynchrone pour l'ensemble des Pokémon
 const pokemonList = await Promise.all(
     sortedList.map(async (pokemon) => {
         const imageSrc = await resolveImageSource(pokemon, pokemon.pkmId);
