@@ -8,6 +8,8 @@ import {
     extractStats,
     calcStat,
     getPokemonMovepool,
+    getTypeEffectiveness,
+    formatMultiplier,
 } from "../../utils/pokemon.js";
 import "../../styles/dex_style.css";
 
@@ -135,6 +137,23 @@ const nextImageSource = nextPokemon
 const resolvedEvolutions = pokemon?.evolution
     ? await resolveEvoTree(pokemon.evolution)
     : [];
+
+const typeEffectiveness = getTypeEffectiveness(
+    pokemonTypes,
+    pokemon?.abilities,
+);
+
+const damagedNormally: { type: string; mult: number }[] = [];
+const weakTo: { type: string; mult: number }[] = [];
+const resistantTo: { type: string; mult: number }[] = [];
+const immuneTo: { type: string; mult: number }[] = [];
+
+Object.entries(typeEffectiveness).forEach(([type, mult]) => {
+    if (mult === 1) damagedNormally.push({ type, mult });
+    else if (mult > 1) weakTo.push({ type, mult });
+    else if (mult < 1 && mult > 0) resistantTo.push({ type, mult });
+    else if (mult === 0) immuneTo.push({ type, mult });
+});
 
 const statConfig: Record<
     string,
@@ -400,6 +419,117 @@ const totalStats = statsOrder.reduce((sum, item) => {
                             </li>
                         </ul>
                     </div>
+                </div>
+
+                <!-- Tableau d'Efficacité des Types -->
+                <div class="wiki-section">
+                    <h2>Type Effectiveness</h2>
+                    <table class="type-effectiveness-table">
+                        <thead>
+                            <tr>
+                                <th colspan="2">
+                                    Under normal battle conditions, this Pokémon
+                                    is:
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="type-eff-label">
+                                    Damaged normally by:
+                                </td>
+                                <td class="type-eff-content">
+                                    {damagedNormally.length > 0 ? (
+                                        <div class="type-eff-list">
+                                            {damagedNormally.map(
+                                                ({ type, mult }) => (
+                                                    <span
+                                                        class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                    >
+                                                        <span>{type}</span>
+                                                        <span class="multiplier">
+                                                            {formatMultiplier(
+                                                                mult,
+                                                            )}
+                                                        </span>
+                                                    </span>
+                                                ),
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <span class="none-text">None</span>
+                                    )}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="type-eff-label">Weak to:</td>
+                                <td class="type-eff-content">
+                                    {weakTo.length > 0 ? (
+                                        <div class="type-eff-list">
+                                            {weakTo.map(({ type, mult }) => (
+                                                <span
+                                                    class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                >
+                                                    <span>{type}</span>
+                                                    <span class="multiplier">
+                                                        {formatMultiplier(mult)}
+                                                    </span>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span class="none-text">None</span>
+                                    )}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="type-eff-label">Immune to:</td>
+                                <td class="type-eff-content">
+                                    {immuneTo.length > 0 ? (
+                                        <div class="type-eff-list">
+                                            {immuneTo.map(({ type, mult }) => (
+                                                <span
+                                                    class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                >
+                                                    <span>{type}</span>
+                                                    <span class="multiplier">
+                                                        {formatMultiplier(mult)}
+                                                    </span>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span class="none-badge">None</span>
+                                    )}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="type-eff-label">Resistant to:</td>
+                                <td class="type-eff-content">
+                                    {resistantTo.length > 0 ? (
+                                        <div class="type-eff-list">
+                                            {resistantTo.map(
+                                                ({ type, mult }) => (
+                                                    <span
+                                                        class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                    >
+                                                        <span>{type}</span>
+                                                        <span class="multiplier">
+                                                            {formatMultiplier(
+                                                                mult,
+                                                            )}
+                                                        </span>
+                                                    </span>
+                                                ),
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <span class="none-text">None</span>
+                                    )}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- Attaques (Movepool) -->
