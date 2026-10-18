@@ -21,7 +21,6 @@
     {"name": "Fury Swipes", "type": "Normal", "category": "Physical", "power": 18, "accuracy": "80%", "pp": 15},
     {"name": "Glare", "type": "Normal", "category": "Status", "power": "–", "accuracy": "100%", "pp": 30},
     {"name": "Growl", "type": "Normal", "category": "Status", "power": "–", "accuracy": "100%", "pp": 40},
-    {"name": "Growth", "type": "Normal", "category": "Status", "power": "–", "accuracy": "–", "pp": 20},
     {"name": "Guillotine", "type": "Normal", "category": "Physical", "power": "–", "accuracy": "30%", "pp": 5},
     {"name": "Harden", "type": "Normal", "category": "Status", "power": "–", "accuracy": "–", "pp": 30},
     {"name": "Headbutt", "type": "Normal", "category": "Physical", "power": 70, "accuracy": "100%", "pp": 15},
@@ -188,6 +187,7 @@
     {"name": "Raging Bull", "type": "Normal", "category": "Physical", "power": 90, "accuracy": "100%", "pp": 10},
     {"name": "Revival Blessing", "type": "Normal", "category": "Status", "power": "–", "accuracy": "–", "pp": 1},
     {"name": "Shed Tail", "type": "Normal", "category": "Status", "power": "–", "accuracy": "–", "pp": 10},
+    {"name": "Tera Starstorm", "type": "Normal", "category": "Special", "power": 120, "accuracy": "100%", "pp": 5},
     {"name": "Tidy Up", "type": "Normal", "category": "Status", "power": "–", "accuracy": "–", "pp": 10},
     
 
@@ -371,6 +371,7 @@
 
 
     {"name": "Absorb", "type": "Grass", "category": "Special", "power": 20, "accuracy": "100%", "pp": 25},
+    {"name": "Growth", "type": "Grass", "category": "Status", "power": "–", "accuracy": "–", "pp": 20},
     {"name": "Leech Seed", "type": "Grass", "category": "Status", "power": "–", "accuracy": "90%", "pp": 10},
     {"name": "Mega Drain", "type": "Grass", "category": "Special", "power": 40, "accuracy": "100%", "pp": 15},
     {"name": "Petal Dance", "type": "Grass", "category": "Special", "power": 120, "accuracy": "100%", "pp": 10},
