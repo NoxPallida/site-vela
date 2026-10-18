@@ -457,7 +457,8 @@
   width: 80px;
   height: 80px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
+  transform: translateZ(0);
 }
 
 .evo-arrow {
