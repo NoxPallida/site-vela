@@ -70,7 +70,8 @@
   width: 96px;
   height: 96px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
+  transform: translateZ(0);
 }
 
 .card-body h3 {
@@ -130,7 +131,8 @@
   width: 16px;
   height: 16px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
+  transform: translateZ(0);
   flex-shrink: 0;
 }
 
@@ -210,7 +212,8 @@
   width: 160px;
   height: 160px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
+  transform: translateZ(0);
 }
 
 .infobox-table {
