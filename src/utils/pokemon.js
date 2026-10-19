@@ -84,152 +84,180 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 		String(a).toLowerCase().replace(/[^a-z0-9]/g, '')
 	);
 
-	const getAbilityName = (...names) => {
-		for (const name of names) {
-			const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-			const foundIndex = normAbilities.findIndex(a => a.includes(norm));
-			if (foundIndex !== -1) {
-				return abilities[foundIndex];
-			}
-		}
-		return null;
+	const getAbilityName = (name) => {
+		const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+		const foundIndex = normAbilities.findIndex(a => a.includes(norm));
+		return foundIndex !== -1 ? abilities[foundIndex] : null;
 	};
 
 	const isSingleAbility = Array.isArray(abilities) && abilities.length === 1;
 	const notes = [];
 
-	const drySkin = getAbilityName('Dry Skin');
-	if (drySkin) {
-		const fireMult = (baseEffectiveness['Fire'] || 1) * 1.25;
-		if (isSingleAbility) {
-			baseEffectiveness['Water'] = 0;
-			baseEffectiveness['Fire'] = fireMult;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${drySkin}, the effectiveness of <span class="type-badge type-water">Water</span> moves is 0× and <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)}.`
-			});
-		}
-	}
-
-	const thickFat = getAbilityName('Thick Fat');
-	if (thickFat) {
-		const fireMult = (baseEffectiveness['Fire'] || 1) * 0.5;
-		const iceMult = (baseEffectiveness['Ice'] || 1) * 0.5;
-		if (isSingleAbility) {
-			baseEffectiveness['Fire'] = fireMult;
-			baseEffectiveness['Ice'] = iceMult;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${thickFat}, the effectiveness of <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)} and <span class="type-badge type-ice">Ice</span> moves is ${formatMultiplier(iceMult)}.`
-			});
-		}
-	}
-
-	const levitate = getAbilityName('Levitate', 'Earth Eater');
-	if (levitate && baseEffectiveness['Ground'] !== 0) {
-		if (isSingleAbility) {
-			baseEffectiveness['Ground'] = 0;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${levitate}, the effectiveness of <span class="type-badge type-ground">Ground</span> moves is 0×.`
-			});
-		}
-	}
-
-	const waterAbsorb = getAbilityName('Water Absorb', 'Storm Drain');
-	if (waterAbsorb && baseEffectiveness['Water'] !== 0) {
-		if (isSingleAbility) {
-			baseEffectiveness['Water'] = 0;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${waterAbsorb}, the effectiveness of <span class="type-badge type-water">Water</span> moves is 0×.`
-			});
-		}
-	}
-
-	const flashFire = getAbilityName('Flash Fire', 'Well-Baked Body');
-	if (flashFire && baseEffectiveness['Fire'] !== 0) {
-		if (isSingleAbility) {
-			baseEffectiveness['Fire'] = 0;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${flashFire}, the effectiveness of <span class="type-badge type-fire">Fire</span> moves is 0×.`
-			});
-		}
-	}
-
-	const voltAbsorb = getAbilityName('Volt Absorb', 'Motor Drive', 'Lightning Rod');
-	if (voltAbsorb && baseEffectiveness['Electric'] !== 0) {
-		if (isSingleAbility) {
-			baseEffectiveness['Electric'] = 0;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${voltAbsorb}, the effectiveness of <span class="type-badge type-electric">Electric</span> moves is 0×.`
-			});
-		}
-	}
-
-	const sapSipper = getAbilityName('Sap Sipper');
-	if (sapSipper && baseEffectiveness['Grass'] !== 0) {
-		if (isSingleAbility) {
-			baseEffectiveness['Grass'] = 0;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${sapSipper}, the effectiveness of <span class="type-badge type-grass">Grass</span> moves is 0×.`
-			});
-		}
-	}
-
-	const heatproof = getAbilityName('Heatproof', 'Water Bubble');
-	if (heatproof) {
-		const fireMult = (baseEffectiveness['Fire'] || 1) * 0.5;
-		if (isSingleAbility) {
-			baseEffectiveness['Fire'] = fireMult;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${heatproof}, the effectiveness of <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)}.`
-			});
-		}
-	}
-
-	const purifyingSalt = getAbilityName('Purifying Salt');
-	if (purifyingSalt) {
-		const ghostMult = (baseEffectiveness['Ghost'] || 1) * 0.5;
-		if (isSingleAbility) {
-			baseEffectiveness['Ghost'] = ghostMult;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${purifyingSalt}, the effectiveness of <span class="type-badge type-ghost">Ghost</span> moves is ${formatMultiplier(ghostMult)}.`
-			});
-		}
-	}
-
-	const fluffy = getAbilityName('Fluffy');
-	if (fluffy) {
-		const fireMult = (baseEffectiveness['Fire'] || 1) * 2;
-		if (isSingleAbility) {
-			baseEffectiveness['Fire'] = fireMult;
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${fluffy}, the effectiveness of contact moves is 0.5× and <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)}.`
-			});
-		}
-	}
-
-	const wonderGuard = getAbilityName('Wonder Guard');
-	if (wonderGuard) {
-		if (isSingleAbility) {
-			ALL_TYPES.forEach(t => {
-				if (baseEffectiveness[t] <= 1) {
-					baseEffectiveness[t] = 0;
+	const abilityHandlers = [
+		{
+			names: ['Dry Skin'],
+			apply: (abilityName) => {
+				const fireMult = (baseEffectiveness['Fire'] || 1) * 1.25;
+				if (isSingleAbility) {
+					baseEffectiveness['Water'] = 0;
+					baseEffectiveness['Fire'] = fireMult;
+				} else {
+					notes.push({
+						text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-water">Water</span> moves is 0× and <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)}.`
+					});
 				}
-			});
-		} else {
-			notes.push({
-				text: `If this Pokémon has ${wonderGuard}, only super-effective moves will deal damage.`
-			});
+			}
+		},
+		{
+			names: ['Thick Fat'],
+			apply: (abilityName) => {
+				const fireMult = (baseEffectiveness['Fire'] || 1) * 0.5;
+				const iceMult = (baseEffectiveness['Ice'] || 1) * 0.5;
+				if (isSingleAbility) {
+					baseEffectiveness['Fire'] = fireMult;
+					baseEffectiveness['Ice'] = iceMult;
+				} else {
+					notes.push({
+						text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)} and <span class="type-badge type-ice">Ice</span> moves is ${formatMultiplier(iceMult)}.`
+					});
+				}
+			}
+		},
+		{
+			names: ['Levitate', 'Earth Eater'],
+			apply: (abilityName) => {
+				if (baseEffectiveness['Ground'] !== 0) {
+					if (isSingleAbility) {
+						baseEffectiveness['Ground'] = 0;
+					} else {
+						notes.push({
+							text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-ground">Ground</span> moves is 0×.`
+						});
+					}
+				}
+			}
+		},
+		{
+			names: ['Water Absorb', 'Storm Drain'],
+			apply: (abilityName) => {
+				if (baseEffectiveness['Water'] !== 0) {
+					if (isSingleAbility) {
+						baseEffectiveness['Water'] = 0;
+					} else {
+						notes.push({
+							text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-water">Water</span> moves is 0×.`
+						});
+					}
+				}
+			}
+		},
+		{
+			names: ['Flash Fire', 'Well-Baked Body'],
+			apply: (abilityName) => {
+				if (baseEffectiveness['Fire'] !== 0) {
+					if (isSingleAbility) {
+						baseEffectiveness['Fire'] = 0;
+					} else {
+						notes.push({
+							text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-fire">Fire</span> moves is 0×.`
+						});
+					}
+				}
+			}
+		},
+		{
+			names: ['Volt Absorb', 'Motor Drive', 'Lightning Rod'],
+			apply: (abilityName) => {
+				if (baseEffectiveness['Electric'] !== 0) {
+					if (isSingleAbility) {
+						baseEffectiveness['Electric'] = 0;
+					} else {
+						notes.push({
+							text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-electric">Electric</span> moves is 0×.`
+						});
+					}
+				}
+			}
+		},
+		{
+			names: ['Sap Sipper'],
+			apply: (abilityName) => {
+				if (baseEffectiveness['Grass'] !== 0) {
+					if (isSingleAbility) {
+						baseEffectiveness['Grass'] = 0;
+					} else {
+						notes.push({
+							text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-grass">Grass</span> moves is 0×.`
+						});
+					}
+				}
+			}
+		},
+		{
+			names: ['Heatproof', 'Water Bubble'],
+			apply: (abilityName) => {
+				const fireMult = (baseEffectiveness['Fire'] || 1) * 0.5;
+				if (isSingleAbility) {
+					baseEffectiveness['Fire'] = fireMult;
+				} else {
+					notes.push({
+						text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)}.`
+					});
+				}
+			}
+		},
+		{
+			names: ['Purifying Salt'],
+			apply: (abilityName) => {
+				const ghostMult = (baseEffectiveness['Ghost'] || 1) * 0.5;
+				if (isSingleAbility) {
+					baseEffectiveness['Ghost'] = ghostMult;
+				} else {
+					notes.push({
+						text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-ghost">Ghost</span> moves is ${formatMultiplier(ghostMult)}.`
+					});
+				}
+			}
+		},
+		{
+			names: ['Fluffy'],
+			apply: (abilityName) => {
+				const fireMult = (baseEffectiveness['Fire'] || 1) * 2;
+				if (isSingleAbility) {
+					baseEffectiveness['Fire'] = fireMult;
+				} else {
+					notes.push({
+						text: `If this Pokémon has ${abilityName}, the effectiveness of contact moves is 0.5× and <span class="type-badge type-fire">Fire</span> moves is ${formatMultiplier(fireMult)}.`
+					});
+				}
+			}
+		},
+		{
+			names: ['Wonder Guard'],
+			apply: (abilityName) => {
+				if (isSingleAbility) {
+					ALL_TYPES.forEach(t => {
+						if (baseEffectiveness[t] <= 1) {
+							baseEffectiveness[t] = 0;
+						}
+					});
+				} else {
+					notes.push({
+						text: `If this Pokémon has <strong>${abilityName}</strong>, only super-effective moves will deal damage.`
+					});
+				}
+			}
 		}
-	}
+	];
+
+	abilityHandlers.forEach(handler => {
+		handler.names.forEach(targetName => {
+			const matchName = getAbilityName(targetName);
+			if (matchName) {
+				handler.apply(matchName);
+			}
+		});
+	});
 
 	return {
 		effectiveness: baseEffectiveness,
