@@ -85,10 +85,15 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 	);
 
 	const getAbilityName = (name) => {
-		const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-		const foundIndex = normAbilities.findIndex(a => a.includes(norm));
-		return foundIndex !== -1 ? abilities[foundIndex] : null;
-	};
+			const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+			const foundIndex = normAbilities.findIndex(a => a.includes(norm));
+			if (foundIndex !== -1) {
+				return String(abilities[foundIndex])
+					.replace(/\s*\([^)]*\)/gi, '')
+					.trim();
+			}
+			return null;
+		};
 
 	const isSingleAbility = Array.isArray(abilities) && abilities.length === 1;
 	const notes = [];
