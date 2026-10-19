@@ -569,3 +569,43 @@
   color: #666666;
   font-style: italic;
 }
+
+.type-notes-row td.type-notes-cell {
+  background-color: #d9d9d9 !important;
+  border-top: 2px solid #a0a0a0;
+  padding: 10px 14px;
+}
+
+.type-notes-container {
+  color: #111111;
+  font-size: 0.85rem;
+}
+
+.type-notes-container strong {
+  display: block;
+  font-size: 0.88rem;
+  margin-bottom: 4px;
+  color: #111111;
+}
+
+.type-notes-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.type-notes-list li {
+  margin-bottom: 4px;
+  line-height: 1.5;
+  color: #111111;
+}
+
+.type-notes-list li:last-child {
+  margin-bottom: 0;
+}
+
+.type-notes-list .type-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 2px;
+}
