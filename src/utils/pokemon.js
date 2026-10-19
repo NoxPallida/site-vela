@@ -26,12 +26,12 @@ export const TYPE_CHART = {
 	Ice:      { Flying: 2, Ground: 2, Steel: 0.5, Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Dragon: 2 },
 	Dragon:   { Steel: 0.5, Dragon: 2, Fairy: 0 },
 	Dark:     { Fighting: 0.5, Ghost: 2, Psychic: 2, Dark: 0.5, Fairy: 0.5 },
-  	Fairy:    { Fighting: 2, Poison: 0.5, Steel: 0.5, Fire: 0.5, Dragon: 2, Dark: 2 },
-  	Diamond:  {},
-  	Time:     {},
-  	Space:    {},
-  	Shadow:   {},
-  	Divine:   {}
+  Fairy:    { Fighting: 2, Poison: 0.5, Steel: 0.5, Fire: 0.5, Dragon: 2, Dark: 2 },
+  Diamond:  { Steel: 2, Diamond: 0.5, Dragon: 0.5, Water: 0.5, Fairy: 0.5, Fire: 0.5, Ice: 2, Rock: 2, Ghost: 2, Dark: 2, Flying: 2 },
+  Time:     {},
+  Space:    {},
+  Shadow:   {},
+  Divine:   {}
 };
 
 export function extractStats(pokemon) {
