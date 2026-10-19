@@ -10,28 +10,28 @@ function normalizeKey(str) {
 
 export const TYPE_CHART = {
 	Normal:   { Rock: 0.5, Ghost: 0, Steel: 0.5 },
-	Fire:     { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
-	Water:    { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2, Dragon: 0.5 },
-	Grass:    { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Dragon: 0.5, Steel: 0.5 },
-	Electric: { Water: 2, Grass: 0.5, Electric: 0.5, Ground: 0, Flying: 2, Dragon: 0.5 },
-	Ice:      { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Dragon: 2, Steel: 0.5 },
-	Fighting: { Normal: 2, Ice: 2, Poison: 0.5, Flying: 0.5, Psychic: 0.5, Bug: 0.5, Rock: 2, Ghost: 0, Dark: 2, Steel: 2, Fairy: 0.5 },
-	Poison:   { Grass: 2, Poison: 0.5, Ground: 0.5, Rock: 0.5, Ghost: 0.5, Steel: 0, Fairy: 2 },
-	Ground:   { Fire: 2, Grass: 0.5, Electric: 2, Poison: 2, Flying: 0, Bug: 0.5, Rock: 2, Steel: 2 },
-	Flying:   { Grass: 2, Electric: 0.5, Fighting: 2, Bug: 2, Rock: 0.5, Steel: 0.5 },
-	Psychic:  { Fighting: 2, Poison: 2, Psychic: 0.5, Dark: 0, Steel: 0.5 },
-	Bug:      { Fire: 0.5, Grass: 2, Fighting: 0.5, Poison: 0.5, Flying: 0.5, Psychic: 2, Ghost: 0.5, Dark: 2, Steel: 0.5, Fairy: 0.5 },
-	Rock:     { Fire: 2, Ice: 2, Fighting: 0.5, Ground: 0.5, Flying: 2, Bug: 2, Steel: 0.5 },
-	Ghost:    { Normal: 0, Psychic: 2, Ghost: 2, Dark: 0.5 },
-	Dragon:   { Dragon: 2, Steel: 0.5, Fairy: 0 },
-	Dark:     { Fighting: 0.5, Psychic: 2, Ghost: 2, Dark: 0.5, Fairy: 0.5 },
-	Steel:    { Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Rock: 2, Steel: 0.5, Fairy: 2 },
-  Fairy:    { Fire: 0.5, Fighting: 2, Poison: 0.5, Dragon: 2, Dark: 2, Steel: 0.5 },
-  Diamond:  {},
-  Time:     {},
-  Space:    {},
-  Shadow:   {},
-  Divine:   {}
+	Fighting: { Normal: 2, Flying: 0.5, Poison: 0.5, Rock: 2, Bug: 0.5, Ghost: 0, Steel: 2, Psychic: 0.5, Ice: 2, Dark: 2, Fairy: 0.5 },
+	Flying:   { Fighting: 2, Rock: 0.5, Bug: 2, Steel: 0.5, Grass: 2, Electric: 0.5 },
+	Poison:   { Poison: 0.5, Ground: 0.5, Rock: 0.5, Ghost: 0.5, Steel: 0, Grass: 2, Fairy: 2 },
+	Ground:   { Flying: 0, Poison: 2, Rock: 2, Bug: 0.5, Steel: 2, Fire: 2, Grass: 0.5, Electric: 2 },
+	Rock:     { Fighting: 0.5, Flying: 2, Ground: 0.5, Bug: 2, Steel: 0.5, Fire: 2, Ice: 2 },
+	Bug:      { Fighting: 0.5, Flying: 0.5, Poison: 0.5, Ghost: 0.5, Steel: 0.5, Fire: 0.5, Grass: 2, Psychic: 2, Dark: 2, Fairy: 0.5 },
+	Ghost:    { Normal: 0, Ghost: 2, Psychic: 2, Dark: 0.5 },
+	Steel:    { Rock: 2, Steel: 0.5, Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Fairy: 2 },
+	Fire:     { Rock: 0.5, Bug: 2, Steel: 2, Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Dragon: 0.5 },
+	Water:    { Ground: 2, Rock: 2, Fire: 2, Water: 0.5, Grass: 0.5, Dragon: 0.5 },
+	Grass:    { Flying: 0.5, Poison: 0.5, Ground: 2, Rock: 2, Bug: 0.5, Steel: 0.5, Fire: 0.5, Water: 2, Grass: 0.5, Dragon: 0.5 },
+	Electric: { Flying: 2, Ground: 0, Water: 2, Grass: 0.5, Electric: 0.5, Dragon: 0.5 },
+	Psychic:  { Fighting: 2, Poison: 2, Steel: 0.5, Psychic: 0.5, Dark: 0 },
+	Ice:      { Flying: 2, Ground: 2, Steel: 0.5, Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Dragon: 2 },
+	Dragon:   { Steel: 0.5, Dragon: 2, Fairy: 0 },
+	Dark:     { Fighting: 0.5, Ghost: 2, Psychic: 2, Dark: 0.5, Fairy: 0.5 },
+  	Fairy:    { Fighting: 2, Poison: 0.5, Steel: 0.5, Fire: 0.5, Dragon: 2, Dark: 2 },
+  	Diamond:  {},
+  	Time:     {},
+  	Space:    {},
+  	Shadow:   {},
+  	Divine:   {}
 };
 
 export function extractStats(pokemon) {
@@ -54,10 +54,10 @@ export function getPokemonTypes(pokemon) {
 
 export function getTypeEffectiveness(types = [], abilities = []) {
 	const ALL_TYPES = [
-		'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice',
-		'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug',
-    'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy',
-    'Diamond', 'Space', 'Time', 'Shadow', 'Divine'
+		'Normal', 'Fighting', 'Flying', 'Poison', 'Ground', 'Rock',
+		'Bug', 'Ghost', 'Steel', 'Fire', 'Water', 'Grass',
+    	'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark', 'Fairy',
+    	'Diamond', 'Space', 'Time', 'Shadow', 'Divine'
 	];
 
 	const normAbilities = (abilities || []).map(a =>
@@ -83,23 +83,23 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 			}
 		});
 
-		if (atkType === 'Ground' && hasAbility('Levitate', 'Lévitation', 'Earth Eater', 'Mange-Terre')) {
+		if (atkType === 'Ground' && hasAbility('Earth Eater', 'Absorbe-Terre', 'Eelevate', 'Lévitaboost', 'Levitate', 'Lévitation')) {
 			mult = 0;
 		}
-		if (atkType === 'Water' && hasAbility('Water Absorb', 'Absorb Eau', 'Storm Drain', 'Lavabo', 'Dry Skin', 'Peau Sèche')) {
+		if (atkType === 'Water' && hasAbility('Dry Skin', 'Peau Sèche', 'Storm Drain', 'Lavabo', 'Water Absorb', 'Absorb Eau')) {
 			mult = 0;
 		}
-		if (atkType === 'Fire' && hasAbility('Flash Fire', 'Torche', 'Well-Baked Body', 'Corps Cuit')) {
+		if (atkType === 'Fire' && hasAbility('Flash Fire', 'Torche', 'Well-Baked Body', 'Bien Cuit')) {
 			mult = 0;
 		}
-		if (atkType === 'Electric' && hasAbility('Volt Absorb', 'Absorb Volt', 'Motor Drive', 'Motorisé', 'Lightning Rod', 'Paratonnerre')) {
+		if (atkType === 'Electric' && hasAbility('Lightning Rod', 'Paratonnerre', 'Motor Drive', 'Motorisé', 'Volt Absorb', 'Absorb Volt')) {
 			mult = 0;
 		}
 		if (atkType === 'Grass' && hasAbility('Sap Sipper', 'Herbivore')) {
 			mult = 0;
 		}
 
-		if (atkType === 'Fire' && hasAbility('Thick Fat', 'Isograisse', 'Heatproof', 'Ignifugé', 'Water Bubble', 'Aquabulle')) {
+		if (atkType === 'Fire' && hasAbility('Heatproof', 'Ignifugé', 'Thick Fat', 'Isograisse', 'Water Bubble', 'Aquabulle')) {
 			mult *= 0.5;
 		}
 		if (atkType === 'Ice' && hasAbility('Thick Fat', 'Isograisse')) {
@@ -108,11 +108,11 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 		if (atkType === 'Ghost' && hasAbility('Purifying Salt', 'Sel Purificateur')) {
 			mult *= 0.5;
 		}
-		if (atkType === 'Fire' && hasAbility('Fluffy', 'Toison')) {
+		if (atkType === 'Fire' && hasAbility('Fluffy', 'Boule de Poils')) {
 			mult *= 2;
 		}
 
-		if (hasAbility('Wonder Guard', 'Garde Magique') && mult <= 1) {
+		if (hasAbility('Wonder Guard', 'Garde Mystik') && mult <= 1) {
 			mult = 0;
 		}
 
