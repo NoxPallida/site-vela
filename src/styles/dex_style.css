@@ -349,7 +349,10 @@
 
 .types {
   display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .type-badge {
@@ -608,4 +611,36 @@
   display: inline-block;
   vertical-align: middle;
   margin: 0 2px;
+}
+
+.form-sub-block {
+  margin-bottom: 1.5rem;
+}
+
+.form-sub-block:last-child {
+  margin-bottom: 0;
+}
+
+.form-sub-title {
+  font-size: 1rem;
+  margin: 0.5rem 0 0.5rem 0;
+  color: var(--text-main);
+  font-weight: bold;
+}
+
+.infobox-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.all-evolution-chains {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.evo-chain-row:not(:last-child) {
+  border-bottom: 1px dashed var(--border-strong);
+  padding-bottom: 1.25rem;
 }

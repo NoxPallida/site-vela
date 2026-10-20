@@ -238,6 +238,23 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 			}
 		},
 		{
+			names: ['Delta Stream'],
+			apply: (abilityName) => {
+				const electricMult = (baseEffectiveness['Electric'] || 1) * 0.5;
+				const iceMult = (baseEffectiveness['Ice'] || 1) * 0.5;
+				const rockMult = (baseEffectiveness['Rock'] || 1) * 0.5;
+				if (isSingleAbility) {
+					baseEffectiveness['Electric'] = electricMult;
+					baseEffectiveness['Ice'] = iceMult;
+					baseEffectiveness['Rock'] = rockMult;
+				} else {
+					notes.push({
+						text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-electric">Electric</span> moves is ${formatMultiplier(electricMult)}, <span class="type-badge type-ice">Ice</span> moves is ${formatMultiplier(iceMult)}, and <span class="type-badge type-rock">Rock</span> moves is ${formatMultiplier(rockMult)}.`
+					});
+				}
+			}
+		},
+		{
 			names: ['Wonder Guard'],
 			apply: (abilityName) => {
 				if (isSingleAbility) {
