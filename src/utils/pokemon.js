@@ -85,15 +85,15 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 	);
 
 	const getAbilityName = (name) => {
-			const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-			const foundIndex = normAbilities.findIndex(a => a.includes(norm));
-			if (foundIndex !== -1) {
-				return String(abilities[foundIndex])
-					.replace(/\s*\([^)]*\)/gi, '')
-					.trim();
-			}
-			return null;
-		};
+		const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+		const foundIndex = normAbilities.findIndex(a => a.includes(norm));
+		if (foundIndex !== -1) {
+			return String(abilities[foundIndex])
+				.replace(/\s*\([^)]*\)/gi, '')
+				.trim();
+		}
+		return null;
+	};
 
 	const isSingleAbility = Array.isArray(abilities) && abilities.length === 1;
 	const notes = [];
@@ -238,23 +238,6 @@ export function getTypeEffectiveness(types = [], abilities = []) {
 			}
 		},
 		{
-			names: ['Delta Stream'],
-			apply: (abilityName) => {
-				const electricMult = (baseEffectiveness['Electric'] || 1) * 0.5;
-				const iceMult = (baseEffectiveness['Ice'] || 1) * 0.5;
-				const rockMult = (baseEffectiveness['Rock'] || 1) * 0.5;
-				if (isSingleAbility) {
-					baseEffectiveness['Electric'] = electricMult;
-					baseEffectiveness['Ice'] = iceMult;
-					baseEffectiveness['Rock'] = rockMult;
-				} else {
-					notes.push({
-						text: `If this Pokémon has ${abilityName}, the effectiveness of <span class="type-badge type-electric">Electric</span> moves is ${formatMultiplier(electricMult)}, <span class="type-badge type-ice">Ice</span> moves is ${formatMultiplier(iceMult)}, and <span class="type-badge type-rock">Rock</span> moves is ${formatMultiplier(rockMult)}.`
-					});
-				}
-			}
-		},
-		{
 			names: ['Wonder Guard'],
 			apply: (abilityName) => {
 				if (isSingleAbility) {
@@ -329,4 +312,264 @@ export function calcStat(base, isHP, level = 100) {
 		const max = Math.floor((Math.floor(((2 * baseNum + 31 + 63) * level) / 100) + 5) * 1.1);
 		return { min, max };
 	}
+}
+
+export const STATS_ORDER = [
+	{ key: "hp", rawKey: "hp" },
+	{ key: "attack", rawKey: "attack" },
+	{ key: "defense", rawKey: "defense" },
+	{ key: "special_attack", rawKey: "special_attack" },
+	{ key: "special_defense", rawKey: "special_defense" },
+	{ key: "speed", rawKey: "speed" },
+];
+
+export const STAT_CONFIG = {
+	hp: { label: "HP", rowBg: "#d5f795", barBg: "#a8f02f", border: "#72a818" },
+	attack: { label: "Attack", rowBg: "#fce893", barBg: "#f8d030", border: "#b89818" },
+	defense: { label: "Defense", rowBg: "#fbc396", barBg: "#f08030", border: "#b55210" },
+	special_attack: { label: "Sp. Atk", rowBg: "#a4d8fa", barBg: "#58abf6", border: "#2272c3" },
+	special_defense: { label: "Sp. Def", rowBg: "#a3b2f7", barBg: "#5070dd", border: "#1f38a1" },
+	speed: { label: "Speed", rowBg: "#f7a1c8", barBg: "#e85098", border: "#a61d62" },
+};
+
+const MISSINGNO_IMG = "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
+const EXTENSIONS = ["png", "jpg", "jpeg", "webp", "PNG"];
+
+export async function resolveImageSource(pkm, id, localImages) {
+	const rawImg = pkm?.image;
+	const isRemoteUrl =
+		typeof rawImg === "string" &&
+		(rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
+		rawImg !== MISSINGNO_IMG;
+
+	if (isRemoteUrl) return rawImg;
+
+	let possibleNames = [];
+	if (typeof rawImg === "string" && rawImg.includes("/")) {
+		const filename = rawImg.split("/").pop();
+		if (filename) possibleNames.push(filename);
+	}
+
+	EXTENSIONS.forEach((ext) => {
+		possibleNames.push(`${id}.${ext}`);
+		possibleNames.push(`${id.replace(".", "_")}.${ext}`);
+		possibleNames.push(`${id.replace("_", ".")}.${ext}`);
+	});
+
+	for (const name of possibleNames) {
+		const fullPath = `/src/assets/images/${name}`;
+		if (localImages && fullPath in localImages) {
+			const mod = await localImages[fullPath]();
+			return mod.default;
+		}
+	}
+
+	return MISSINGNO_IMG;
+}
+
+export async function resolveEvoTree(nodes, pkmId, localImages) {
+	if (!nodes || !nodes.length) return [];
+	return Promise.all(
+		nodes.map(async (node) => {
+			const nodeId = node.url ? node.url.split("=")[1] : pkmId;
+			const imageSrc = await resolveImageSource(node, nodeId, localImages);
+			const next = node.next ? await resolveEvoTree(node.next, pkmId, localImages) : undefined;
+			return {
+				...node,
+				nodeId,
+				imageSrc,
+				next,
+			};
+		})
+	);
+}
+
+export function groupByUniqueContent(items, keyFn) {
+	const groups = [];
+	for (const item of items) {
+		const key = keyFn(item);
+		const existing = groups.find((g) => keyFn(g.data) === key);
+		if (existing) {
+			existing.names.push(item.formName);
+		} else {
+			groups.push({ names: [item.formName], data: item });
+		}
+	}
+	return groups;
+}
+
+export function isMegaOrSpecialForm(name = "") {
+	const lower = name.toLowerCase();
+	return (
+		lower.includes("mega") ||
+		lower.includes("primal") ||
+		lower.includes("origin")
+	);
+}
+
+export async function getPokemonPageData(pkmId, localImages) {
+	const baseId = pkmId.split(".")[0].split("_")[0];
+
+	const basePokemonList = Object.entries(dexData)
+		.map(([key, value]) => ({
+			...value,
+			pkmId: value.id !== undefined ? String(value.id) : key,
+		}))
+		.filter((p) => !p.pkmId.includes(".") && !p.pkmId.includes("_"))
+		.sort((a, b) => Number(a.pkmId) - Number(b.pkmId));
+
+	const currentIndex = basePokemonList.findIndex(
+		(p) => p.pkmId.split(".")[0].split("_")[0] === baseId
+	);
+
+	const prevPokemon = currentIndex > 0 ? basePokemonList[currentIndex - 1] : null;
+	const nextPokemon = currentIndex < basePokemonList.length - 1 ? basePokemonList[currentIndex + 1] : null;
+
+	const prevName = prevPokemon ? getPokemonName(prevPokemon) : "";
+	const nextName = nextPokemon ? getPokemonName(nextPokemon) : "";
+
+	const prevImageSource = prevPokemon ? await resolveImageSource(prevPokemon, prevPokemon.pkmId, localImages) : null;
+	const nextImageSource = nextPokemon ? await resolveImageSource(nextPokemon, nextPokemon.pkmId, localImages) : null;
+
+	const familyForms = Object.entries(dexData)
+		.map(([key, value]) => ({
+			...value,
+			pkmId: value.id !== undefined ? String(value.id) : key,
+		}))
+		.filter((p) => p.pkmId.split(".")[0].split("_")[0] === baseId)
+		.sort((a, b) => {
+			const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+			const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+			if (baseA !== baseB) return baseA - baseB;
+			return formA - formB;
+		});
+
+	const rawEvolutionChains = await Promise.all(
+		familyForms
+			.filter((formPkm) => {
+				const name = getPokemonName(formPkm);
+				return !isMegaOrSpecialForm(name) && formPkm?.evolution && formPkm.evolution.length > 0;
+			})
+			.map(async (formPkm) => {
+				const evoTree = await resolveEvoTree(formPkm.evolution, pkmId, localImages);
+				return {
+					formName: getPokemonName(formPkm),
+					evoTree,
+				};
+			})
+	);
+
+	const allEvolutionChains = rawEvolutionChains.filter(
+		(chain, index, self) =>
+			index === self.findIndex((c) => JSON.stringify(c.evoTree) === JSON.stringify(chain.evoTree))
+	);
+
+	const resolvedForms = await Promise.all(
+		familyForms.map(async (formPkm) => {
+			const formPkmId = formPkm.pkmId;
+			const formName = getPokemonName(formPkm);
+			const formTypes = getPokemonTypes(formPkm);
+			const formRawStats = extractStats(formPkm);
+			const formMovepool = getPokemonMovepool(formPkmId);
+			const formImageSource = await resolveImageSource(formPkm, formPkmId, localImages);
+
+			const { effectiveness: typeEffectiveness, notes: typeNotes } = getTypeEffectiveness(
+				formTypes,
+				formPkm?.abilities
+			);
+
+			const damagedNormally = [];
+			const weakTo = [];
+			const resistantTo = [];
+			const immuneTo = [];
+
+			Object.entries(typeEffectiveness).forEach(([type, mult]) => {
+				if (mult === 1) damagedNormally.push({ type, mult });
+				else if (mult > 1) weakTo.push({ type, mult });
+				else if (mult < 1 && mult > 0) resistantTo.push({ type, mult });
+				else if (mult === 0) immuneTo.push({ type, mult });
+			});
+
+			const formTotalStats = STATS_ORDER.reduce((sum, item) => {
+				return sum + (Number(formRawStats[item.rawKey] || formRawStats[item.key]) || 0);
+			}, 0);
+
+			return {
+				formPkm,
+				formPkmId,
+				formName,
+				formTypes,
+				formRawStats,
+				formMovepool,
+				formImageSource,
+				typeEffectiveness,
+				typeNotes,
+				damagedNormally,
+				weakTo,
+				resistantTo,
+				immuneTo,
+				formTotalStats,
+			};
+		})
+	);
+
+	const dexEntryForms = resolvedForms.filter((f) => f.formPkm?.dex_entry);
+	const dexEntryGroups = groupByUniqueContent(dexEntryForms, (f) => String(f.formPkm.dex_entry).trim());
+	const statGroups = groupByUniqueContent(resolvedForms, (f) => JSON.stringify(f.formRawStats));
+	const typeGroups = groupByUniqueContent(resolvedForms, (f) =>
+		JSON.stringify({
+			damagedNormally: f.damagedNormally,
+			weakTo: f.weakTo,
+			resistantTo: f.resistantTo,
+			immuneTo: f.immuneTo,
+			typeNotes: f.typeNotes,
+		})
+	);
+	const movepoolGroups = groupByUniqueContent(resolvedForms, (f) => JSON.stringify(f.formMovepool));
+
+	return {
+		prevPokemon,
+		nextPokemon,
+		prevName,
+		nextName,
+		prevImageSource,
+		nextImageSource,
+		allEvolutionChains,
+		resolvedForms,
+		dexEntryGroups,
+		statGroups,
+		typeGroups,
+		movepoolGroups,
+		mainPokemonName: resolvedForms[0]?.formName || "Unknown",
+	};
+}
+
+export async function getPokedexList(localImages) {
+	const rawList = Object.entries(dexData).map(([key, value]) => ({
+		...value,
+		pkmId: value.id !== undefined ? String(value.id) : key,
+	}));
+
+	const sortedList = rawList.sort((a, b) => {
+		const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
+		const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
+		if (baseA !== baseB) return baseA - baseB;
+		return formA - formB;
+	});
+
+	return Promise.all(
+		sortedList.map(async (pokemon) => {
+			const imageSrc = await resolveImageSource(pokemon, pokemon.pkmId, localImages);
+			return {
+				...pokemon,
+				imageSrc,
+			};
+		})
+	);
+}
+
+export function formatPkmId(pkmId) {
+	const [base, form] = String(pkmId).split(".");
+	const paddedBase = base.padStart(3, "0");
+	return form ? `${paddedBase}.${form}` : paddedBase;
 }

@@ -3,942 +3,765 @@ import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import pokedexData from "../../data/dex_data.json";
 import {
-	getPokemonName,
-	getPokemonTypes,
-	extractStats,
-	calcStat,
-	getPokemonMovepool,
-	getTypeEffectiveness,
-	formatMultiplier,
+    getPokemonPageData,
+    calcStat,
+    formatMultiplier,
+    STAT_CONFIG,
+    STATS_ORDER,
+    formatPkmId,
 } from "../../utils/pokemon.js";
 import "../../styles/dex_style.css";
 
 interface Move {
-	level: number | string;
-	name: string;
-	type: string;
-	category: string;
-	power: number | string;
-	accuracy: number | string;
+    level: number | string;
+    name: string;
+    type: string;
+    category: string;
+    power: number | string;
+    accuracy: number | string;
 }
 
 export async function getStaticPaths() {
-	return Object.entries(pokedexData).map(([key, value]: [string, any]) => {
-		const pkmId = value.id !== undefined ? String(value.id) : key;
-		return {
-			params: { id: pkmId },
-			props: { pokemon: value, pkmId },
-		};
-	});
+    return Object.entries(pokedexData).map(([key, value]: [string, any]) => {
+        const pkmId = value.id !== undefined ? String(value.id) : key;
+        return {
+            params: { id: pkmId },
+            props: { pokemon: value, pkmId },
+        };
+    });
 }
 
 const { pokemon, pkmId } = Astro.props;
 
-const MISSINGNO_IMG =
-	"https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
-
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
-	"/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
+    "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
 );
 
-const EXTENSIONS = ["png", "jpg", "jpeg", "webp", "PNG"];
-
-async function resolveImageSource(
-	pkm: any,
-	id: string,
-): Promise<ImageMetadata | string> {
-	const rawImg = pkm?.image;
-
-	const isRemoteUrl =
-		typeof rawImg === "string" &&
-		(rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
-		rawImg !== MISSINGNO_IMG;
-
-	if (isRemoteUrl) {
-		return rawImg;
-	}
-
-	let possibleNames: string[] = [];
-	if (typeof rawImg === "string" && rawImg.includes("/")) {
-		const filename = rawImg.split("/").pop();
-		if (filename) possibleNames.push(filename);
-	}
-
-	EXTENSIONS.forEach((ext) => {
-		possibleNames.push(`${id}.${ext}`);
-		possibleNames.push(`${id.replace(".", "_")}.${ext}`);
-		possibleNames.push(`${id.replace("_", ".")}.${ext}`);
-	});
-
-	for (const name of possibleNames) {
-		const fullPath = `/src/assets/images/${name}`;
-		if (fullPath in localImages) {
-			const mod = await localImages[fullPath]();
-			return mod.default;
-		}
-	}
-
-	return MISSINGNO_IMG;
-}
-
-async function resolveEvoTree(nodes: any[]): Promise<any[]> {
-	if (!nodes || !nodes.length) return [];
-	return Promise.all(
-		nodes.map(async (node: any) => {
-			const nodeId = node.url ? node.url.split("=")[1] : pkmId;
-			const imageSrc = await resolveImageSource(node, nodeId);
-			const next = node.next
-				? await resolveEvoTree(node.next)
-				: undefined;
-			return {
-				...node,
-				nodeId,
-				imageSrc,
-				next,
-			};
-		}),
-	);
-}
-
-// Extraction de l'ID de base (ex: "3" pour "3", "3.1", "3.2")
-const baseId = pkmId.split(".")[0].split("_")[0];
-
-// Navigation principale entre espèces uniquement
-const basePokemonList = Object.entries(pokedexData)
-	.map(([key, value]: [string, any]) => ({
-		...value,
-		pkmId: value.id !== undefined ? String(value.id) : key,
-	}))
-	.filter((p) => !p.pkmId.includes(".") && !p.pkmId.includes("_"))
-	.sort((a, b) => Number(a.pkmId) - Number(b.pkmId));
-
-const currentIndex = basePokemonList.findIndex(
-	(p) => p.pkmId.split(".")[0].split("_")[0] === baseId,
-);
-
-const prevPokemon = currentIndex > 0 ? basePokemonList[currentIndex - 1] : null;
-const nextPokemon =
-	currentIndex < basePokemonList.length - 1
-		? basePokemonList[currentIndex + 1]
-		: null;
-
-const prevName = prevPokemon ? getPokemonName(prevPokemon) : "";
-const nextName = nextPokemon ? getPokemonName(nextPokemon) : "";
-
-const prevImageSource = prevPokemon
-	? await resolveImageSource(prevPokemon, prevPokemon.pkmId)
-	: null;
-const nextImageSource = nextPokemon
-	? await resolveImageSource(nextPokemon, nextPokemon.pkmId)
-	: null;
-
-// Regroupement de toutes les formes alternatives appartenant au même Pokémon
-const familyForms = Object.entries(pokedexData)
-	.map(([key, value]: [string, any]) => ({
-		...value,
-		pkmId: value.id !== undefined ? String(value.id) : key,
-	}))
-	.filter((p) => p.pkmId.split(".")[0].split("_")[0] === baseId)
-	.sort((a, b) => {
-		const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
-		const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
-		if (baseA !== baseB) return baseA - baseB;
-		return formA - formB;
-	});
-
-// Filtre des formes pour exclure Méga / Primo / Origine des lignes d'évolution
-const isMegaOrSpecialForm = (name = "") => {
-	const lower = name.toLowerCase();
-	return (
-		lower.includes("mega") ||
-		lower.includes("méga") ||
-		lower.includes("primal") ||
-		lower.includes("primo") ||
-		lower.includes("origin") ||
-		lower.includes("origine")
-	);
-};
-
-// Extraction et résolution de toutes les chaînes d'évolution valides de la famille
-const rawEvolutionChains = await Promise.all(
-	familyForms
-		.filter((formPkm) => {
-			const name = getPokemonName(formPkm);
-			return (
-				!isMegaOrSpecialForm(name) &&
-				formPkm?.evolution &&
-				formPkm.evolution.length > 0
-			);
-		})
-		.map(async (formPkm) => {
-			const evoTree = await resolveEvoTree(formPkm.evolution);
-			return {
-				formName: getPokemonName(formPkm),
-				evoTree,
-			};
-		}),
-);
-
-// Déduplication des chaînes identiques
-const allEvolutionChains = rawEvolutionChains.filter(
-	(chain, index, self) =>
-		index ===
-		self.findIndex(
-			(c) => JSON.stringify(c.evoTree) === JSON.stringify(chain.evoTree),
-		),
-);
-
-const statConfig: Record<
-	string,
-	{ label: string; rowBg: string; barBg: string; border: string }
-> = {
-	hp: { label: "HP", rowBg: "#d5f795", barBg: "#a8f02f", border: "#72a818" },
-	attack: {
-		label: "Attack",
-		rowBg: "#fce893",
-		barBg: "#f8d030",
-		border: "#b89818",
-	},
-	defense: {
-		label: "Defense",
-		rowBg: "#fbc396",
-		barBg: "#f08030",
-		border: "#b55210",
-	},
-	special_attack: {
-		label: "Sp. Atk",
-		rowBg: "#a4d8fa",
-		barBg: "#58abf6",
-		border: "#2272c3",
-	},
-	special_defense: {
-		label: "Sp. Def",
-		rowBg: "#a3b2f7",
-		barBg: "#5070dd",
-		border: "#1f38a1",
-	},
-	speed: {
-		label: "Speed",
-		rowBg: "#f7a1c8",
-		barBg: "#e85098",
-		border: "#a61d62",
-	},
-};
-
-const statsOrder = [
-	{ key: "hp", rawKey: "hp" },
-	{ key: "attack", rawKey: "attack" },
-	{ key: "defense", rawKey: "defense" },
-	{ key: "special_attack", rawKey: "special_attack" },
-	{ key: "special_defense", rawKey: "special_defense" },
-	{ key: "speed", rawKey: "speed" },
-];
-
-// Résolution des informations pour chaque forme alternative
-const resolvedForms = await Promise.all(
-	familyForms.map(async (formPkm) => {
-		const formPkmId = formPkm.pkmId;
-		const formName = getPokemonName(formPkm);
-		const formTypes = getPokemonTypes(formPkm);
-		const formRawStats = extractStats(formPkm);
-		const formMovepool: Move[] = getPokemonMovepool(formPkmId);
-		const formImageSource = await resolveImageSource(formPkm, formPkmId);
-
-		const { effectiveness: typeEffectiveness, notes: typeNotes } =
-			getTypeEffectiveness(formTypes, formPkm?.abilities);
-
-		const damagedNormally: { type: string; mult: number }[] = [];
-		const weakTo: { type: string; mult: number }[] = [];
-		const resistantTo: { type: string; mult: number }[] = [];
-		const immuneTo: { type: string; mult: number }[] = [];
-
-		Object.entries(typeEffectiveness).forEach(([type, mult]) => {
-			if (mult === 1) damagedNormally.push({ type, mult });
-			else if (mult > 1) weakTo.push({ type, mult });
-			else if (mult < 1 && mult > 0) resistantTo.push({ type, mult });
-			else if (mult === 0) immuneTo.push({ type, mult });
-		});
-
-		const formTotalStats = statsOrder.reduce((sum, item) => {
-			return (
-				sum +
-				(Number(formRawStats[item.rawKey] || formRawStats[item.key]) ||
-					0)
-			);
-		}, 0);
-
-		return {
-			formPkm,
-			formPkmId,
-			formName,
-			formTypes,
-			formRawStats,
-			formMovepool,
-			formImageSource,
-			typeEffectiveness,
-			typeNotes,
-			damagedNormally,
-			weakTo,
-			resistantTo,
-			immuneTo,
-			formTotalStats,
-		};
-	}),
-);
-
-const mainPokemonName = resolvedForms[0]?.formName || "Unknown";
+const {
+    prevPokemon,
+    nextPokemon,
+    prevName,
+    nextName,
+    prevImageSource,
+    nextImageSource,
+    allEvolutionChains,
+    resolvedForms,
+    dexEntryGroups,
+    statGroups,
+    typeGroups,
+    movepoolGroups,
+    mainPokemonName,
+} = await getPokemonPageData(pkmId, localImages);
 ---
 
 <BaseLayout title={`${mainPokemonName} - Vela Pokédex`}>
-	<div class="dex-detail-container">
-		<!-- Navigation supérieure -->
-		<nav class="dex-nav-bar">
-			{prevPokemon && prevImageSource ? (
-				<a href={`/dex/${prevPokemon.pkmId}`} class="nav-btn prev-btn">
-					←
-					<Image
-						src={prevImageSource as any}
-						alt={prevName}
-						width={16}
-						height={16}
-						format="webp"
-						quality={90}
-						class="nav-icon"
-					/>
-					<span>
-						#{String(prevPokemon.pkmId).padStart(3, "0")} {prevName}
-					</span>
-				</a>
-			) : (
-				<div class="nav-placeholder"></div>
-			)}
+    <div class="dex-detail-container">
+        <!-- Navigation supérieure -->
+        <nav class="dex-nav-bar">
+            {prevPokemon && prevImageSource ? (
+                <a href={`/dex/${prevPokemon.pkmId}`} class="nav-btn prev-btn">
+                    ←
+                    <Image
+                        src={prevImageSource as any}
+                        alt={prevName}
+                        width={16}
+                        height={16}
+                        format="webp"
+                        quality={90}
+                        class="nav-icon"
+                    />
+                    <span>
+                        #{formatPkmId(prevPokemon.pkmId)} {prevName}
+                    </span>
+                </a>
+            ) : (
+                <div class="nav-placeholder"></div>
+            )}
 
-			<a href="/pokedex" class="back-link">
-				Pokédex
-			</a>
+            <a href="/pokedex" class="back-link">
+                Pokédex
+            </a>
 
-			{nextPokemon && nextImageSource ? (
-				<a href={`/dex/${nextPokemon.pkmId}`} class="nav-btn next-btn">
-					<span>
-						{nextName} #{String(nextPokemon.pkmId).padStart(3, "0")}
-					</span>
-					<Image
-						src={nextImageSource as any}
-						alt={nextName}
-						width={16}
-						height={16}
-						format="webp"
-						quality={90}
-						class="nav-icon"
-					/>
-					→
-				</a>
-			) : (
-				<div class="nav-placeholder"></div>
-			)}
-		</nav>
+            {nextPokemon && nextImageSource ? (
+                <a href={`/dex/${nextPokemon.pkmId}`} class="nav-btn next-btn">
+                    <span>
+                        {nextName} #{formatPkmId(nextPokemon.pkmId)}
+                    </span>
+                    <Image
+                        src={nextImageSource as any}
+                        alt={nextName}
+                        width={16}
+                        height={16}
+                        format="webp"
+                        quality={90}
+                        class="nav-icon"
+                    />
+                    →
+                </a>
+            ) : (
+                <div class="nav-placeholder"></div>
+            )}
+        </nav>
 
-		<!-- Layout Wiki Principal -->
-		<div class="wiki-layout">
-			<!-- Colonne de Gauche -->
-			<div class="main-content">
-				<!-- Descriptions Pokédex -->
-				{resolvedForms.some((f) => f.formPkm?.dex_entry) && (
-					<div class="wiki-section">
-						<h2>Pokédex Entry</h2>
-						{resolvedForms.map(
-							(form) =>
-								form.formPkm?.dex_entry && (
-									<div class="form-sub-block">
-										{resolvedForms.length > 1 && (
-											<h3 class="form-sub-title">
-												{form.formName}
-											</h3>
-										)}
-										<p class="dex-entry-text">
-											« {form.formPkm.dex_entry} »
-										</p>
-									</div>
-								),
-						)}
-					</div>
-				)}
+        <!-- Layout Wiki Principal -->
+        <div class="wiki-layout">
+            <!-- Colonne de Gauche -->
+            <div class="main-content">
+                <!-- Descriptions Pokédex -->
+                {dexEntryGroups.length > 0 && (
+                    <div class="wiki-section">
+                        <h2>Pokédex Entry</h2>
+                        {dexEntryGroups.map((group) => (
+                            <div class="form-sub-block">
+                                {dexEntryGroups.length > 1 && (
+                                    <h3 class="form-sub-title">
+                                        {group.names.join(" / ")}
+                                    </h3>
+                                )}
+                                <p class="dex-entry-text">
+                                    « {group.data.formPkm.dex_entry} »
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
-				<!-- Chaînes d'évolution multiples -->
-				{allEvolutionChains && allEvolutionChains.length > 0 && (
-					<div class="wiki-section">
-						<h2>Evolutions</h2>
-						<div class="all-evolution-chains">
-							{allEvolutionChains.map((chain) => (
-								<div class="evo-chain-row">
-									{allEvolutionChains.length > 1 && (
-										<h3 class="form-sub-title">
-											{chain.formName}
-										</h3>
-									)}
-									<div class="evolution-chain">
-										{(() => {
-											const renderNodes = (
-												nodes: any[],
-											) => {
-												return nodes.map(
-													(node: any) => {
-														return (
-															<div class="evo-step">
-																{node.method && (
-																	<div class="evo-arrow">
-																		<span>
-																			➔
-																		</span>
-																		<small>
-																			{
-																				node.method
-																			}
-																		</small>
-																	</div>
-																)}
+                <!-- Chaînes d'évolution multiples -->
+                {allEvolutionChains && allEvolutionChains.length > 0 && (
+                    <div class="wiki-section">
+                        <h2>Evolutions</h2>
+                        <div class="all-evolution-chains">
+                            {allEvolutionChains.map((chain) => (
+                                <div class="evo-chain-row">
+                                    {allEvolutionChains.length > 1 && (
+                                        <h3 class="form-sub-title">
+                                            {chain.formName}
+                                        </h3>
+                                    )}
+                                    <div class="evolution-chain">
+                                        {(() => {
+                                            const renderNodes = (
+                                                nodes: any[],
+                                            ) => {
+                                                return nodes.map(
+                                                    (node: any) => {
+                                                        return (
+                                                            <div class="evo-step">
+                                                                {node.method && (
+                                                                    <div class="evo-arrow">
+                                                                        <span>
+                                                                            ➔
+                                                                        </span>
+                                                                        <small>
+                                                                            {
+                                                                                node.method
+                                                                            }
+                                                                        </small>
+                                                                    </div>
+                                                                )}
 
-																<a
-																	href={`/dex/${node.nodeId}`}
-																	class="evo-card"
-																>
-																	<Image
-																		src={
-																			node.imageSrc as any
-																		}
-																		alt={
-																			node.name
-																		}
-																		width={
-																			80
-																		}
-																		height={
-																			80
-																		}
-																		format="webp"
-																		quality={
-																			90
-																		}
-																	/>
-																	<span>
-																		{
-																			node.name
-																		}
-																	</span>
-																</a>
+                                                                <a
+                                                                    href={`/dex/${node.nodeId}`}
+                                                                    class="evo-card"
+                                                                >
+                                                                    <Image
+                                                                        src={
+                                                                            node.imageSrc as any
+                                                                        }
+                                                                        alt={
+                                                                            node.name
+                                                                        }
+                                                                        width={
+                                                                            80
+                                                                        }
+                                                                        height={
+                                                                            80
+                                                                        }
+                                                                        format="webp"
+                                                                        quality={
+                                                                            90
+                                                                        }
+                                                                    />
+                                                                    <span>
+                                                                        {
+                                                                            node.name
+                                                                        }
+                                                                    </span>
+                                                                </a>
 
-																{node.next &&
-																	node.next
-																		.length >
-																		0 && (
-																		<div class="evo-branches">
-																			{renderNodes(
-																				node.next,
-																			)}
-																		</div>
-																	)}
-															</div>
-														);
-													},
-												);
-											};
+                                                                {node.next &&
+                                                                    node.next
+                                                                        .length >
+                                                                        0 && (
+                                                                        <div class="evo-branches">
+                                                                            {renderNodes(
+                                                                                node.next,
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                            </div>
+                                                        );
+                                                    },
+                                                );
+                                            };
 
-											return renderNodes(chain.evoTree);
-										})()}
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
-				)}
+                                            return renderNodes(chain.evoTree);
+                                        })()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-				<!-- Localisations -->
-				{pokemon?.location && pokemon.location.length > 0 && (
-					<div class="wiki-section">
-						<h2>Game Locations</h2>
-						<div class="location-list">
-							{pokemon.location.map((loc: any) => (
-								<span class="location-tag">{loc.name}</span>
-							))}
-						</div>
-					</div>
-				)}
+                <!-- Localisations -->
+                {pokemon?.location && pokemon.location.length > 0 && (
+                    <div class="wiki-section">
+                        <h2>Game Locations</h2>
+                        <div class="location-list">
+                            {pokemon.location.map((loc: any) => (
+                                <span class="location-tag">{loc.name}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-				<!-- Section Base Stats -->
-				<div class="wiki-section">
-					<h2>Base Stats</h2>
-					{resolvedForms.map((form) => (
-						<div class="form-sub-block">
-							{resolvedForms.length > 1 && (
-								<h3 class="form-sub-title">{form.formName}</h3>
-							)}
-							<table class="stats-table">
-								<thead>
-									<tr>
-										<th colspan="3" class="header-stat">
-											Stat
-										</th>
-										<th colspan="2" class="header-range">
-											Range
-										</th>
-									</tr>
-									<tr class="subheader-row">
-										<th colspan="3"></th>
-										<th>At Lv. 50</th>
-										<th>At Lv. 100</th>
-									</tr>
-								</thead>
-								<tbody>
-									{statsOrder.map((item) => {
-										const val =
-											Number(
-												form.formRawStats[
-													item.rawKey
-												] ||
-													form.formRawStats[item.key],
-											) || 0;
-										const isHP = item.key === "hp";
-										const config = statConfig[item.key];
-										const range50 = calcStat(val, isHP, 50);
-										const range100 = calcStat(
-											val,
-											isHP,
-											100,
-										);
+                <!-- Section Base Stats -->
+                <div class="wiki-section">
+                    <h2>Base Stats</h2>
+                    {statGroups.map((group) => {
+                        const form = group.data;
+                        return (
+                            <div class="form-sub-block">
+                                {statGroups.length > 1 && (
+                                    <h3 class="form-sub-title">
+                                        {group.names.join(" / ")}
+                                    </h3>
+                                )}
+                                <table class="stats-table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="3" class="header-stat">
+                                                Stat
+                                            </th>
+                                            <th
+                                                colspan="2"
+                                                class="header-range"
+                                            >
+                                                Range
+                                            </th>
+                                        </tr>
+                                        <tr class="subheader-row">
+                                            <th colspan="3"></th>
+                                            <th>At Lv. 50</th>
+                                            <th>At Lv. 100</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {STATS_ORDER.map((item) => {
+                                            const val =
+                                                Number(
+                                                    form.formRawStats[
+                                                        item.rawKey
+                                                    ] ||
+                                                        form.formRawStats[
+                                                            item.key
+                                                        ],
+                                                ) || 0;
+                                            const isHP = item.key === "hp";
+                                            const config =
+                                                STAT_CONFIG[
+                                                    item.key as keyof typeof STAT_CONFIG
+                                                ];
+                                            const range50 = calcStat(
+                                                val,
+                                                isHP,
+                                                50,
+                                            );
+                                            const range100 = calcStat(
+                                                val,
+                                                isHP,
+                                                100,
+                                            );
 
-										return (
-											<tr
-												style={`background-color: ${config.rowBg}; color: #000;`}
-											>
-												<td class="stat-name-cell">
-													<strong>
-														{config.label}:
-													</strong>
-												</td>
-												<td class="stat-value-cell">
-													<strong>{val}</strong>
-												</td>
-												<td class="stat-bar-cell">
-													<div class="bar-container">
-														<div
-															class="bar-fill"
-															style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
-														></div>
-													</div>
-												</td>
-												<td class="stat-range-cell">
-													{range50.min === range50.max
-														? range50.min
-														: `${range50.min} - ${range50.max}`}
-												</td>
-												<td class="stat-range-cell">
-													{range100.min ===
-													range100.max
-														? range100.min
-														: `${range100.min} - ${range100.max}`}
-												</td>
-											</tr>
-										);
-									})}
-									<tr class="total-row">
-										<td class="stat-name-cell">
-											<strong>Total:</strong>
-										</td>
-										<td class="stat-value-cell">
-											<strong>
-												{form.formTotalStats}
-											</strong>
-										</td>
-										<td colspan="3"></td>
-									</tr>
-								</tbody>
-							</table>
-							<div class="stats-notes">
-								<ul>
-									<li>
-										Minimum stats are calculated with 0 EVs,
-										IVs of 0, and (if applicable) a
-										hindering nature.
-									</li>
-									<li>
-										Maximum stats are calculated with 252
-										EVs, IVs of 31, and (if applicable) a
-										helpful nature.
-									</li>
-								</ul>
-							</div>
-						</div>
-					))}
-				</div>
+                                            return (
+                                                <tr
+                                                    style={`background-color: ${config.rowBg}; color: #000;`}
+                                                >
+                                                    <td class="stat-name-cell">
+                                                        <strong>
+                                                            {config.label}:
+                                                        </strong>
+                                                    </td>
+                                                    <td class="stat-value-cell">
+                                                        <strong>{val}</strong>
+                                                    </td>
+                                                    <td class="stat-bar-cell">
+                                                        <div class="bar-container">
+                                                            <div
+                                                                class="bar-fill"
+                                                                style={`width: ${Math.min(100, (val / 255) * 100)}%; background-color: ${config.barBg}; border: 1px solid ${config.border};`}
+                                                            ></div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="stat-range-cell">
+                                                        {range50.min ===
+                                                        range50.max
+                                                            ? range50.min
+                                                            : `${range50.min} - ${range50.max}`}
+                                                    </td>
+                                                    <td class="stat-range-cell">
+                                                        {range100.min ===
+                                                        range100.max
+                                                            ? range100.min
+                                                            : `${range100.min} - ${range100.max}`}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        <tr class="total-row">
+                                            <td class="stat-name-cell">
+                                                <strong>Total:</strong>
+                                            </td>
+                                            <td class="stat-value-cell">
+                                                <strong>
+                                                    {form.formTotalStats}
+                                                </strong>
+                                            </td>
+                                            <td colspan="3"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="stats-notes">
+                                    <ul>
+                                        <li>
+                                            Minimum stats are calculated with 0
+                                            EVs, IVs of 0, and (if applicable) a
+                                            hindering nature.
+                                        </li>
+                                        <li>
+                                            Maximum stats are calculated with
+                                            252 EVs, IVs of 31, and (if
+                                            applicable) a helpful nature.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
 
-				<!-- Section Type Effectiveness -->
-				<div class="wiki-section">
-					<h2>Type Effectiveness</h2>
-					{resolvedForms.map((form) => (
-						<div class="form-sub-block">
-							{resolvedForms.length > 1 && (
-								<h3 class="form-sub-title">{form.formName}</h3>
-							)}
-							<table class="type-effectiveness-table">
-								<thead>
-									<tr>
-										<th colspan="2">
-											Under normal battle conditions, this
-											Pokémon is:
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td class="type-eff-label">
-											Damaged normally by:
-										</td>
-										<td class="type-eff-content">
-											{form.damagedNormally.length > 0 ? (
-												<div class="type-eff-list">
-													{form.damagedNormally.map(
-														({ type, mult }) => (
-															<span
-																class={`type-eff-badge type-${type.toLowerCase()}`}
-															>
-																<span>
-																	{type}
-																</span>
-																<span class="multiplier">
-																	{formatMultiplier(
-																		mult,
-																	)}
-																</span>
-															</span>
-														),
-													)}
-												</div>
-											) : (
-												<span class="none-text">
-													None
-												</span>
-											)}
-										</td>
-									</tr>
-									<tr>
-										<td class="type-eff-label">Weak to:</td>
-										<td class="type-eff-content">
-											{form.weakTo.length > 0 ? (
-												<div class="type-eff-list">
-													{form.weakTo.map(
-														({ type, mult }) => (
-															<span
-																class={`type-eff-badge type-${type.toLowerCase()}`}
-															>
-																<span>
-																	{type}
-																</span>
-																<span class="multiplier">
-																	{formatMultiplier(
-																		mult,
-																	)}
-																</span>
-															</span>
-														),
-													)}
-												</div>
-											) : (
-												<span class="none-text">
-													None
-												</span>
-											)}
-										</td>
-									</tr>
-									<tr>
-										<td class="type-eff-label">
-											Immune to:
-										</td>
-										<td class="type-eff-content">
-											{form.immuneTo.length > 0 ? (
-												<div class="type-eff-list">
-													{form.immuneTo.map(
-														({ type, mult }) => (
-															<span
-																class={`type-eff-badge type-${type.toLowerCase()}`}
-															>
-																<span>
-																	{type}
-																</span>
-																<span class="multiplier">
-																	{formatMultiplier(
-																		mult,
-																	)}
-																</span>
-															</span>
-														),
-													)}
-												</div>
-											) : (
-												<span class="none-badge">
-													None
-												</span>
-											)}
-										</td>
-									</tr>
-									<tr>
-										<td class="type-eff-label">
-											Resistant to:
-										</td>
-										<td class="type-eff-content">
-											{form.resistantTo.length > 0 ? (
-												<div class="type-eff-list">
-													{form.resistantTo.map(
-														({ type, mult }) => (
-															<span
-																class={`type-eff-badge type-${type.toLowerCase()}`}
-															>
-																<span>
-																	{type}
-																</span>
-																<span class="multiplier">
-																	{formatMultiplier(
-																		mult,
-																	)}
-																</span>
-															</span>
-														),
-													)}
-												</div>
-											) : (
-												<span class="none-text">
-													None
-												</span>
-											)}
-										</td>
-									</tr>
-									{form.typeNotes &&
-										form.typeNotes.length > 0 && (
-											<tr class="type-notes-row">
-												<td
-													colspan="2"
-													class="type-notes-cell"
-												>
-													<div class="type-notes-container">
-														<strong>Notes:</strong>
-														<ul class="type-notes-list">
-															{form.typeNotes.map(
-																(note) => (
-																	<li
-																		set:html={
-																			note.text
-																		}
-																	/>
-																),
-															)}
-														</ul>
-													</div>
-												</td>
-											</tr>
-										)}
-								</tbody>
-							</table>
-						</div>
-					))}
-				</div>
+                <!-- Section Type Effectiveness -->
+                <div class="wiki-section">
+                    <h2>Type Effectiveness</h2>
+                    {typeGroups.map((group) => {
+                        const form = group.data;
+                        return (
+                            <div class="form-sub-block">
+                                {typeGroups.length > 1 && (
+                                    <h3 class="form-sub-title">
+                                        {group.names.join(" / ")}
+                                    </h3>
+                                )}
+                                <table class="type-effectiveness-table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2">
+                                                Under normal battle conditions,
+                                                this Pokémon is:
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="type-eff-label">
+                                                Damaged normally by:
+                                            </td>
+                                            <td class="type-eff-content">
+                                                {form.damagedNormally.length >
+                                                0 ? (
+                                                    <div class="type-eff-list">
+                                                        {form.damagedNormally.map(
+                                                            ({
+                                                                type,
+                                                                mult,
+                                                            }: {
+                                                                type: string;
+                                                                mult: number;
+                                                            }) => (
+                                                                <span
+                                                                    class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                                >
+                                                                    <span>
+                                                                        {type}
+                                                                    </span>
+                                                                    <span class="multiplier">
+                                                                        {formatMultiplier(
+                                                                            mult,
+                                                                        )}
+                                                                    </span>
+                                                                </span>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span class="none-text">
+                                                        None
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="type-eff-label">
+                                                Weak to:
+                                            </td>
+                                            <td class="type-eff-content">
+                                                {form.weakTo.length > 0 ? (
+                                                    <div class="type-eff-list">
+                                                        {form.weakTo.map(
+                                                            ({
+                                                                type,
+                                                                mult,
+                                                            }: {
+                                                                type: string;
+                                                                mult: number;
+                                                            }) => (
+                                                                <span
+                                                                    class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                                >
+                                                                    <span>
+                                                                        {type}
+                                                                    </span>
+                                                                    <span class="multiplier">
+                                                                        {formatMultiplier(
+                                                                            mult,
+                                                                        )}
+                                                                    </span>
+                                                                </span>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span class="none-text">
+                                                        None
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="type-eff-label">
+                                                Immune to:
+                                            </td>
+                                            <td class="type-eff-content">
+                                                {form.immuneTo.length > 0 ? (
+                                                    <div class="type-eff-list">
+                                                        {form.immuneTo.map(
+                                                            ({
+                                                                type,
+                                                                mult,
+                                                            }: {
+                                                                type: string;
+                                                                mult: number;
+                                                            }) => (
+                                                                <span
+                                                                    class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                                >
+                                                                    <span>
+                                                                        {type}
+                                                                    </span>
+                                                                    <span class="multiplier">
+                                                                        {formatMultiplier(
+                                                                            mult,
+                                                                        )}
+                                                                    </span>
+                                                                </span>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span class="none-badge">
+                                                        None
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="type-eff-label">
+                                                Resistant to:
+                                            </td>
+                                            <td class="type-eff-content">
+                                                {form.resistantTo.length > 0 ? (
+                                                    <div class="type-eff-list">
+                                                        {form.resistantTo.map(
+                                                            ({
+                                                                type,
+                                                                mult,
+                                                            }: {
+                                                                type: string;
+                                                                mult: number;
+                                                            }) => (
+                                                                <span
+                                                                    class={`type-eff-badge type-${type.toLowerCase()}`}
+                                                                >
+                                                                    <span>
+                                                                        {type}
+                                                                    </span>
+                                                                    <span class="multiplier">
+                                                                        {formatMultiplier(
+                                                                            mult,
+                                                                        )}
+                                                                    </span>
+                                                                </span>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span class="none-text">
+                                                        None
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        {form.typeNotes &&
+                                            form.typeNotes.length > 0 && (
+                                                <tr class="type-notes-row">
+                                                    <td
+                                                        colspan="2"
+                                                        class="type-notes-cell"
+                                                    >
+                                                        <div class="type-notes-container">
+                                                            <strong>
+                                                                Notes:
+                                                            </strong>
+                                                            <ul class="type-notes-list">
+                                                                {form.typeNotes.map(
+                                                                    (note: {
+                                                                        text: string;
+                                                                    }) => (
+                                                                        <li
+                                                                            set:html={
+                                                                                note.text
+                                                                            }
+                                                                        />
+                                                                    ),
+                                                                )}
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        );
+                    })}
+                </div>
 
-				<!-- Section Learned Moves -->
-				<div class="wiki-section">
-					<h2>Learned Moves</h2>
-					{resolvedForms.map((form) => (
-						<div class="form-sub-block">
-							{resolvedForms.length > 1 && (
-								<h3 class="form-sub-title">{form.formName}</h3>
-							)}
-							{form.formMovepool.length > 0 ? (
-								<table class="move-table">
-									<thead>
-										<tr>
-											<th>Level</th>
-											<th>Move</th>
-											<th>Type</th>
-											<th>Category</th>
-											<th>Power</th>
-											<th>Accuracy</th>
-										</tr>
-									</thead>
-									<tbody>
-										{form.formMovepool.map((move: Move) => (
-											<tr>
-												<td>
-													{move.level === 0 ||
-													move.level === 1
-														? "Evo / 1"
-														: move.level}
-												</td>
-												<td>{move.name}</td>
-												<td>
-													<span
-														class={`type-badge type-${move.type.toLowerCase()}`}
-													>
-														{move.type}
-													</span>
-												</td>
-												<td>
-													<span
-														class={`move-category ${move.category.toLowerCase()}`}
-													>
-														{move.category}
-													</span>
-												</td>
-												<td>{move.power}</td>
-												<td>{move.accuracy}</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							) : (
-								<p class="none-text">No moves available.</p>
-							)}
-						</div>
-					))}
-				</div>
-			</div>
+                <!-- Section Learned Moves -->
+                <div class="wiki-section">
+                    <h2>Learned Moves</h2>
+                    {movepoolGroups.map((group) => {
+                        const form = group.data;
+                        return (
+                            <div class="form-sub-block">
+                                {movepoolGroups.length > 1 && (
+                                    <h3 class="form-sub-title">
+                                        {group.names.join(" / ")}
+                                    </h3>
+                                )}
+                                {form.formMovepool.length > 0 ? (
+                                    <table class="move-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Level</th>
+                                                <th>Move</th>
+                                                <th>Type</th>
+                                                <th>Category</th>
+                                                <th>Power</th>
+                                                <th>Accuracy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {form.formMovepool.map(
+                                                (move: Move) => (
+                                                    <tr>
+                                                        <td>
+                                                            {move.level === 0 ||
+                                                            move.level === 1
+                                                                ? "Evo / 1"
+                                                                : move.level}
+                                                        </td>
+                                                        <td>{move.name}</td>
+                                                        <td>
+                                                            <span
+                                                                class={`type-badge type-${move.type.toLowerCase()}`}
+                                                            >
+                                                                {move.type}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span
+                                                                class={`move-category ${move.category.toLowerCase()}`}
+                                                            >
+                                                                {move.category}
+                                                            </span>
+                                                        </td>
+                                                        <td>{move.power}</td>
+                                                        <td>{move.accuracy}</td>
+                                                    </tr>
+                                                ),
+                                            )}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <p class="none-text">No moves available.</p>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
-			<!-- Colonne de Droite (Infobox empilées) -->
-			<div class="infobox-stack">
-				{resolvedForms.map((form) => (
-					<aside class="wiki-infobox">
-						<div class="infobox-title">
-							<h1>{form.formName}</h1>
-							<span class="pokemon-id">
-								#{String(form.formPkmId).padStart(3, "0")}
-							</span>
-						</div>
+            <!-- Colonne de Droite (Infobox empilées) -->
+            <div class="infobox-stack">
+                {resolvedForms.map((form) => (
+                    <aside class="wiki-infobox">
+                        <div class="infobox-title">
+                            <h1>{form.formName}</h1>
+                            <span class="pokemon-id">
+                                #{formatPkmId(form.formPkmId)}
+                            </span>
+                        </div>
 
-						<div class="infobox-sprite">
-							<Image
-								src={form.formImageSource as any}
-								alt={form.formName}
-								width={160}
-								height={160}
-								format="webp"
-								quality={90}
-							/>
-						</div>
+                        <div class="infobox-sprite">
+                            <Image
+                                src={form.formImageSource as any}
+                                alt={form.formName}
+                                width={160}
+                                height={160}
+                                format="webp"
+                                quality={90}
+                            />
+                        </div>
 
-						<table class="infobox-table">
-							<tbody>
-								<tr>
-									<th>Type</th>
-									<td>
-										<div class="types">
-											{form.formTypes.map((t: string) => (
-												<span
-													class={`type-badge type-${String(t).toLowerCase()}`}
-												>
-													{t}
-												</span>
-											))}
-										</div>
-									</td>
-								</tr>
-								{form.formPkm?.abilities && (
-									<tr>
-										<th>Abilities</th>
-										<td>
-											{form.formPkm.abilities.join(", ")}
-										</td>
-									</tr>
-								)}
-								<tr>
-									<th>Gender</th>
-									<td>
-										{(() => {
-											const male =
-												form.formPkm?.gender_ratio
-													?.male;
-											const female =
-												form.formPkm?.gender_ratio
-													?.female;
+                        <table class="infobox-table">
+                            <tbody>
+                                <tr>
+                                    <th>Type</th>
+                                    <td>
+                                        <div class="types">
+                                            {form.formTypes.map((t: string) => (
+                                                <span
+                                                    class={`type-badge type-${String(t).toLowerCase()}`}
+                                                >
+                                                    {t}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {form.formPkm?.abilities && (
+                                    <tr>
+                                        <th>Abilities</th>
+                                        <td>
+                                            {form.formPkm.abilities.join(", ")}
+                                        </td>
+                                    </tr>
+                                )}
+                                <tr>
+                                    <th>Gender</th>
+                                    <td>
+                                        {(() => {
+                                            const male =
+                                                form.formPkm?.gender_ratio
+                                                    ?.male;
+                                            const female =
+                                                form.formPkm?.gender_ratio
+                                                    ?.female;
 
-											if (male === 100) {
-												return (
-													<span class="gender-male">
-														100% ♂
-													</span>
-												);
-											}
-											if (female === 100) {
-												return (
-													<span class="gender-female">
-														100% ♀
-													</span>
-												);
-											}
-											if (
-												typeof male === "number" &&
-												typeof female === "number"
-											) {
-												return (
-													<>
-														<span class="gender-male">
-															{male}% ♂
-														</span>
-														{" / "}
-														<span class="gender-female">
-															{female}% ♀
-														</span>
-													</>
-												);
-											}
-											return "N/A";
-										})()}
-									</td>
-								</tr>
-								{form.formPkm?.size && (
-									<tr>
-										<th>Height</th>
-										<td>{form.formPkm.size}</td>
-									</tr>
-								)}
-								{form.formPkm?.weight && (
-									<tr>
-										<th>Weight</th>
-										<td>{form.formPkm.weight}</td>
-									</tr>
-								)}
-								{form.formPkm?.catch_rate !== undefined && (
-									<tr>
-										<th>Catch Rate</th>
-										<td>{form.formPkm.catch_rate}</td>
-									</tr>
-								)}
-								{form.formPkm?.base_exp !== undefined && (
-									<tr>
-										<th>Base Exp</th>
-										<td>{form.formPkm.base_exp}</td>
-									</tr>
-								)}
-								{form.formPkm?.egg_groups && (
-									<tr>
-										<th>Egg Groups</th>
-										<td>
-											{form.formPkm.egg_groups.join(", ")}
-										</td>
-									</tr>
-								)}
-								{form.formPkm?.hatch_time !== undefined && (
-									<tr>
-										<th>Hatch Cycles</th>
-										<td>{form.formPkm.hatch_time}</td>
-									</tr>
-								)}
-								{form.formPkm?.ev && (
-									<tr>
-										<th>EV Yield</th>
-										<td>{form.formPkm.ev}</td>
-									</tr>
-								)}
-							</tbody>
-						</table>
-					</aside>
-				))}
-			</div>
-		</div>
-	</div>
+                                            if (male === 100) {
+                                                return (
+                                                    <span class="gender-male">
+                                                        100% ♂
+                                                    </span>
+                                                );
+                                            }
+                                            if (female === 100) {
+                                                return (
+                                                    <span class="gender-female">
+                                                        100% ♀
+                                                    </span>
+                                                );
+                                            }
+                                            if (
+                                                typeof male === "number" &&
+                                                typeof female === "number"
+                                            ) {
+                                                return (
+                                                    <>
+                                                        <span class="gender-male">
+                                                            {male}% ♂
+                                                        </span>
+                                                        {" / "}
+                                                        <span class="gender-female">
+                                                            {female}% ♀
+                                                        </span>
+                                                    </>
+                                                );
+                                            }
+                                            return "N/A";
+                                        })()}
+                                    </td>
+                                </tr>
+                                {form.formPkm?.size && (
+                                    <tr>
+                                        <th>Height</th>
+                                        <td>{form.formPkm.size}</td>
+                                    </tr>
+                                )}
+                                {form.formPkm?.weight && (
+                                    <tr>
+                                        <th>Weight</th>
+                                        <td>{form.formPkm.weight}</td>
+                                    </tr>
+                                )}
+                                {form.formPkm?.catch_rate !== undefined && (
+                                    <tr>
+                                        <th>Catch Rate</th>
+                                        <td>{form.formPkm.catch_rate}</td>
+                                    </tr>
+                                )}
+                                {form.formPkm?.base_exp !== undefined && (
+                                    <tr>
+                                        <th>Base Exp</th>
+                                        <td>{form.formPkm.base_exp}</td>
+                                    </tr>
+                                )}
+                                {form.formPkm?.egg_groups && (
+                                    <tr>
+                                        <th>Egg Groups</th>
+                                        <td>
+                                            {form.formPkm.egg_groups.join(", ")}
+                                        </td>
+                                    </tr>
+                                )}
+                                {form.formPkm?.hatch_time !== undefined && (
+                                    <tr>
+                                        <th>Hatch Cycles</th>
+                                        <td>{form.formPkm.hatch_time}</td>
+                                    </tr>
+                                )}
+                                {form.formPkm?.ev && (
+                                    <tr>
+                                        <th>EV Yield</th>
+                                        <td>{form.formPkm.ev}</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </aside>
+                ))}
+            </div>
+        </div>
+    </div>
 </BaseLayout>

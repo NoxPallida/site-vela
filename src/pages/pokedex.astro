@@ -1,80 +1,19 @@
 ---
 import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import pokedexData from "../data/dex_data.json";
-import { getPokemonName, getPokemonTypes } from "../utils/pokemon.js";
+import {
+    getPokemonName,
+    getPokemonTypes,
+    getPokedexList,
+    formatPkmId,
+} from "../utils/pokemon.js";
 import "../styles/dex_style.css";
-
-const MISSINGNO_IMG =
-    "https://www.pokepedia.fr/images/5/54/Sprite_MissingNo._RV.png";
 
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
     "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
 );
 
-const rawList = Object.entries(pokedexData).map(
-    ([key, value]: [string, any]) => ({
-        ...value,
-        pkmId: value.id !== undefined ? String(value.id) : key,
-    }),
-);
-
-const sortedList = rawList.sort((a, b) => {
-    const [baseA, formA = 0] = a.pkmId.split(".").map(Number);
-    const [baseB, formB = 0] = b.pkmId.split(".").map(Number);
-    if (baseA !== baseB) return baseA - baseB;
-    return formA - formB;
-});
-
-const EXTENSIONS = ["png", "jpg", "jpeg", "webp", "PNG"];
-
-async function resolveImageSource(
-    pokemon: any,
-    id: string,
-): Promise<ImageMetadata | string> {
-    const rawImg = pokemon?.image;
-
-    const isRemoteUrl =
-        typeof rawImg === "string" &&
-        (rawImg.startsWith("http://") || rawImg.startsWith("https://")) &&
-        rawImg !== MISSINGNO_IMG;
-
-    if (isRemoteUrl) {
-        return rawImg;
-    }
-
-    let possibleNames: string[] = [];
-    if (typeof rawImg === "string" && rawImg.includes("/")) {
-        const filename = rawImg.split("/").pop();
-        if (filename) possibleNames.push(filename);
-    }
-
-    EXTENSIONS.forEach((ext) => {
-        possibleNames.push(`${id}.${ext}`);
-        possibleNames.push(`${id.replace(".", "_")}.${ext}`);
-        possibleNames.push(`${id.replace("_", ".")}.${ext}`);
-    });
-
-    for (const name of possibleNames) {
-        const fullPath = `/src/assets/images/${name}`;
-        if (fullPath in localImages) {
-            const mod = await localImages[fullPath]();
-            return mod.default;
-        }
-    }
-
-    return MISSINGNO_IMG;
-}
-
-const pokemonList = await Promise.all(
-    sortedList.map(async (pokemon) => {
-        const imageSrc = await resolveImageSource(pokemon, pokemon.pkmId);
-        return {
-            ...pokemon,
-            imageSrc,
-        };
-    }),
-);
+const pokemonList = await getPokedexList(localImages);
 ---
 
 <BaseLayout title="Pokédex - Vela Pokédex">
@@ -102,7 +41,7 @@ const pokemonList = await Promise.all(
                     >
                         <div class="card-header">
                             <span class="pokemon-id">
-                                #{String(pokemon.pkmId).padStart(3, "0")}
+                                #{formatPkmId(pokemon.pkmId)}
                             </span>
                         </div>
                         <div class="card-image">
