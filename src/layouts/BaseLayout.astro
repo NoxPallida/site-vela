@@ -2,7 +2,7 @@
 import "../styles/global.css";
 
 interface Props {
-    title?: string;
+	title?: string;
 }
 
 const { title = "Vela Pokédex" } = Astro.props;
@@ -10,36 +10,51 @@ const { title = "Vela Pokédex" } = Astro.props;
 
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{title}</title>
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    </head>
-    <body>
-        <header class="site-header">
-            <nav class="nav-links">
-                <a href="/" class="nav-btn">
-                    Home
-                </a>
-                <a href="/pokedex" class="nav-btn">
-                    Pokédex
-                </a>
-                <a href="/new-features" class="nav-btn">
-                    New Features
-                </a>
-                <a href="/download" class="nav-btn">
-                    Download
-                </a>
-            </nav>
-        </header>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title}</title>
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	</head>
+	<body>
+		<header class="site-header">
+			<nav class="nav-links">
+				<a href="/" class="nav-btn">
+					Home
+				</a>
+				<a href="/pokedex" class="nav-btn">
+					Pokédex
+				</a>
+				<a href="/new-features" class="nav-btn">
+					New Features
+				</a>
+				<a href="/download" class="nav-btn">
+					Download
+				</a>
+			</nav>
 
-        <main class="site-main">
-            <slot />
-        </main>
+			<div class="header-search">
+				<input
+					type="text"
+					id="search-input"
+					placeholder="Search..."
+					autocomplete="off"
+				/>
+				<div class="search-results" id="search-results"></div>
+			</div>
+		</header>
 
-        <footer class="site-footer">
-            <p>© Vela Pokédex</p>
-        </footer>
-    </body>
+		<main class="site-main">
+			<slot />
+		</main>
+
+		<footer class="site-footer">
+			<p>© Vela Pokédex</p>
+		</footer>
+
+		<script>
+			import { initGlobalSearch } from "../utils/pokemon.js";
+			initGlobalSearch();
+		</script>
+	</body>
 </html>

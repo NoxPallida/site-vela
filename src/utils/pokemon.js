@@ -573,3 +573,88 @@ export function formatPkmId(pkmId) {
 	const paddedBase = base.padStart(3, "0");
 	return form ? `${paddedBase}.${form}` : paddedBase;
 }
+
+const searchIndex = Object.entries(dexData).map(([key, value]) => {
+	const pkmId = value.id !== undefined ? String(value.id) : key;
+	const name = getPokemonName(value);
+	return { pkmId, name };
+});
+
+export function initGlobalSearch() {
+	const searchInput = document.getElementById("search-input");
+	const resultsContainer = document.getElementById("search-results");
+
+	if (!searchInput) return;
+
+	function renderResults(query) {
+		const val = query.trim().toLowerCase();
+		const cards = document.querySelectorAll(".pokemon-card");
+
+		if (cards.length > 0) {
+			cards.forEach((card) => {
+				const name = card.getAttribute("data-name") || "";
+				card.style.display = name.includes(val) ? "flex" : "none";
+			});
+		}
+
+		if (!resultsContainer) return;
+
+		if (!val) {
+			resultsContainer.innerHTML = "";
+			resultsContainer.classList.remove("active");
+			return;
+		}
+
+		const matches = searchIndex
+			.filter((p) => p.name.toLowerCase().includes(val) || p.pkmId.includes(val))
+			.slice(0, 8);
+
+		if (matches.length === 0) {
+			resultsContainer.innerHTML = `<div class="search-no-results">No Pokémon found</div>`;
+			resultsContainer.classList.add("active");
+			return;
+		}
+
+		resultsContainer.innerHTML = matches
+			.map(
+				(p) => `
+				<a href="/dex/${p.pkmId}" class="search-result-item">
+					<span class="result-id">#${formatPkmId(p.pkmId)}</span>
+					<span class="result-name">${p.name}</span>
+				</a>
+			`
+			)
+			.join("");
+
+		resultsContainer.classList.add("active");
+	}
+
+	searchInput.addEventListener("input", (e) => {
+		renderResults(e.target.value);
+	});
+
+	searchInput.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			const val = searchInput.value.trim().toLowerCase();
+			if (!val) return;
+
+			const firstMatch = searchIndex.find(
+				(p) => p.name.toLowerCase().includes(val) || p.pkmId.includes(val)
+			);
+
+			if (firstMatch) {
+				window.location.href = `/dex/${firstMatch.pkmId}`;
+			}
+		} else if (e.key === "Escape") {
+			if (resultsContainer) {
+				resultsContainer.classList.remove("active");
+			}
+		}
+	});
+
+	document.addEventListener("click", (e) => {
+		if (resultsContainer && !e.target.closest(".header-search")) {
+			resultsContainer.classList.remove("active");
+		}
+	});
+}

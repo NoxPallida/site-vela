@@ -2,91 +2,66 @@
 import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
-    getPokemonName,
-    getPokemonTypes,
-    getPokedexList,
-    formatPkmId,
+	getPokemonName,
+	getPokemonTypes,
+	getPokedexList,
+	formatPkmId,
 } from "../utils/pokemon.js";
 import "../styles/dex_style.css";
 
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
-    "/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
+	"/src/assets/images/*.{png,jpg,jpeg,webp,PNG}",
 );
 
 const pokemonList = await getPokedexList(localImages);
 ---
 
 <BaseLayout title="Pokédex - Vela Pokédex">
-    <div class="pokedex-container">
-        <h1>Vela Pokédex</h1>
+	<div class="pokedex-container">
+		<h1>Vela Pokédex</h1>
 
-        <div class="search-bar">
-            <input
-                type="text"
-                id="search-input"
-                placeholder="Search a Pokémon..."
-            />
-        </div>
+		<div class="pokemon-grid" id="pokemon-grid">
+			{pokemonList.map((pokemon) => {
+				const pokemonName = getPokemonName(pokemon);
+				const pokemonTypes = getPokemonTypes(pokemon);
 
-        <div class="pokemon-grid" id="pokemon-grid">
-            {pokemonList.map((pokemon) => {
-                const pokemonName = getPokemonName(pokemon);
-                const pokemonTypes = getPokemonTypes(pokemon);
-
-                return (
-                    <a
-                        href={`/dex/${pokemon.pkmId}`}
-                        class="pokemon-card"
-                        data-name={pokemonName.toLowerCase()}
-                    >
-                        <div class="card-header">
-                            <span class="pokemon-id">
-                                #{formatPkmId(pokemon.pkmId)}
-                            </span>
-                        </div>
-                        <div class="card-image">
-                            <Image
-                                src={pokemon.imageSrc as any}
-                                alt={pokemonName}
-                                width={96}
-                                height={96}
-                                format="webp"
-                                quality={90}
-                                loading="lazy"
-                            />
-                        </div>
-                        <div class="card-body">
-                            <h3>{pokemonName}</h3>
-                            <div class="types">
-                                {pokemonTypes.map((t: string) => (
-                                    <span
-                                        class={`type-badge type-${String(t).toLowerCase()}`}
-                                    >
-                                        {t}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </a>
-                );
-            })}
-        </div>
-    </div>
+				return (
+					<a
+						href={`/dex/${pokemon.pkmId}`}
+						class="pokemon-card"
+						data-name={pokemonName.toLowerCase()}
+					>
+						<div class="card-header">
+							<span class="pokemon-id">
+								#{formatPkmId(pokemon.pkmId)}
+							</span>
+						</div>
+						<div class="card-image">
+							<Image
+								src={pokemon.imageSrc as any}
+								alt={pokemonName}
+								width={96}
+								height={96}
+								format="webp"
+								quality={90}
+								loading="lazy"
+							/>
+						</div>
+						<div class="card-body">
+							<h3>{pokemonName}</h3>
+							<div class="types">
+								{pokemonTypes.map((t: string) => (
+									<span
+										class={`type-badge type-${String(t).toLowerCase()}`}
+									>
+										{t}
+									</span>
+								))}
+							</div>
+						</div>
+					</a>
+				);
+			})}
+		</div>
+	</div>
 </BaseLayout>
-
-<script>
-    const searchInput = document.getElementById(
-        "search-input",
-    ) as HTMLInputElement;
-    const cards = document.querySelectorAll(".pokemon-card");
-
-    searchInput?.addEventListener("input", (e) => {
-        const value = (e.target as HTMLInputElement).value.toLowerCase();
-        cards.forEach((card) => {
-            const name = card.getAttribute("data-name") || "";
-            (card as HTMLElement).style.display = name.includes(value)
-                ? "flex"
-                : "none";
-        });
-    });
-</script>
