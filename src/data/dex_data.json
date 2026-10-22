@@ -13986,9 +13986,15 @@
         ],
         "evolution": [
             {
+                "name": "Helix Fossil",
+                "image": "../images/fossil_helix.png",
+                "url": ""
+            },
+            {
                 "name": "Omanyte",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/138.png",
-                "url": "dex.html?id=183"
+                "url": "dex.html?id=183",
+                "method": "Fossil machine"
             },
             {
                 "name": "Omastar",
@@ -14037,9 +14043,15 @@
         ],
         "evolution": [
             {
+                "name": "Helix Fossil",
+                "image": "../images/fossil_helix.png",
+                "url": ""
+            },
+            {
                 "name": "Omanyte",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/138.png",
-                "url": "dex.html?id=183"
+                "url": "dex.html?id=183",
+                "method": "Fossil machine"
             },
             {
                 "name": "Omastar",
@@ -14088,9 +14100,15 @@
         ],
         "evolution": [
             {
+                "name": "Dome Fossil",
+                "image": "../images/fossil_dome.png",
+                "url": ""
+            },
+            {
                 "name": "Kabuto",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/140.png",
-                "url": "dex.html?id=185"
+                "url": "dex.html?id=185",
+                "method": "Fossil machine"
             },
             {
                 "name": "Kabutops",
@@ -14139,9 +14157,15 @@
         ],
         "evolution": [
             {
+                "name": "Dome Fossil",
+                "image": "../images/fossil_dome.png",
+                "url": ""
+            },
+            {
                 "name": "Kabuto",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/140.png",
-                "url": "dex.html?id=185"
+                "url": "dex.html?id=185",
+                "method": "Fossil machine"
             },
             {
                 "name": "Kabutops",
@@ -14190,9 +14214,15 @@
         ],
         "evolution": [
             {
+                "name": "Old Amber",
+                "image": "../images/fossil_old_amber.png",
+                "url": ""
+            },
+            {
                 "name": "Aerodactyl",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/142.png",
                 "url": "dex.html?id=187",
+                "method": "Fossil machine",
                 "mega": [
                     {
                         "name": "Mega Aerodactyl",
@@ -14240,10 +14270,16 @@
             { "name": "Home", "url": "../home.html" }
         ],
         "evolution": [
+             {
+                "name": "Old Amber",
+                "image": "../images/fossil_old_amber.png",
+                "url": ""
+            },
             {
                 "name": "Aerodactyl",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/142.png",
                 "url": "dex.html?id=187",
+                "method": "Fossil machine",
                 "mega": [
                     {
                         "name": "Mega Aerodactyl",
@@ -25662,10 +25698,16 @@
             { "name": "Home", "url": "../home.html" }
         ],
         "evolution": [
+             {
+                "name": "Root Fossil",
+                "image": "../images/fossil_root.png",
+                "url": ""
+            },
             {
                 "name": "Lileep",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/345.png",
-                "url": "dex.html?id=368"
+                "url": "dex.html?id=368",
+                "method": "Fossil machine"
             },
             {
                 "name": "Cradily",
@@ -25713,9 +25755,15 @@
         ],
         "evolution": [
             {
+                "name": "Root Fossil",
+                "image": "../images/fossil_root.png",
+                "url": ""
+            },
+            {
                 "name": "Lileep",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/345.png",
-                "url": "dex.html?id=368"
+                "url": "dex.html?id=368",
+                "method": "Fossil machine"
             },
             {
                 "name": "Cradily",
@@ -25763,9 +25811,15 @@
         ],
         "evolution": [
             {
+                "name": "Claw Fossil",
+                "image": "../images/fossil_claw.png",
+                "url": ""
+            },
+            {
                 "name": "Anorith",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/347.png",
-                "url": "dex.html?id=370"
+                "url": "dex.html?id=370",
+                "method": "Fossil machine"
             },
             {
                 "name": "Armaldo",
@@ -25812,10 +25866,16 @@
             { "name": "Home", "url": "../home.html" }
         ],
         "evolution": [
+             {
+                "name": "Claw Fossil",
+                "image": "../images/fossil_claw.png",
+                "url": ""
+            },
             {
                 "name": "Anorith",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/347.png",
-                "url": "dex.html?id=370"
+                "url": "dex.html?id=370",
+                "method": "Fossil machine"
             },
             {
                 "name": "Armaldo",
@@ -36405,9 +36465,15 @@
         ],
         "evolution": [
             {
+                "name": "Cover Fossil",
+                "image": "../images/fossil_cover.png",
+                "url": ""
+            },
+            {
                 "name": "Tirtouga",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/564.png",
-                "url": "dex.html?id=521"
+                "url": "dex.html?id=521",
+                "method": "Fossil machine"
             },
             {
                 "name": "Carracosta",
@@ -36456,9 +36522,15 @@
         ],
         "evolution": [
             {
+                "name": "Cover Fossil",
+                "image": "../images/fossil_cover.png",
+                "url": ""
+            },
+            {
                 "name": "Tirtouga",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/564.png",
-                "url": "dex.html?id=521"
+                "url": "dex.html?id=521",
+                "method": "Fossil machine"
             },
             {
                 "name": "Carracosta",
@@ -36504,10 +36576,16 @@
             { "name": "Home", "url": "../home.html" }
         ],
         "evolution": [
+             {
+                "name": "Plume Fossil",
+                "image": "../images/fossil_plume.png",
+                "url": ""
+            },
             {
                 "name": "Archen",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/566.png",
-                "url": "dex.html?id=523"
+                "url": "dex.html?id=523",
+                "method": "Fossil machine"
             },
             {
                 "name": "Archeops",
@@ -36554,9 +36632,15 @@
         ],
         "evolution": [
             {
+                "name": "Plume Fossil",
+                "image": "../images/fossil_plume.png",
+                "url": ""
+            },
+            {
                 "name": "Archen",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/566.png",
-                "url": "dex.html?id=523"
+                "url": "dex.html?id=523",
+                "method": "Fossil machine"
             },
             {
                 "name": "Archeops",
@@ -43436,9 +43520,15 @@
         ],
         "evolution": [
             {
+                "name": "Jaw Fossil",
+                "image": "../images/fossil_jaw.png",
+                "url": ""
+            },
+            {
                 "name": "Tyrunt",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/696.png",
-                "url": "dex.html?id=633"
+                "url": "dex.html?id=633",
+                "method": "Fossil machine"
             },
             {
                 "name": "Tyrantrum",
@@ -43486,9 +43576,15 @@
         ],
         "evolution": [
             {
+                "name": "Jaw Fossil",
+                "image": "../images/fossil_jaw.png",
+                "url": ""
+            },
+            {
                 "name": "Tyrunt",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/696.png",
-                "url": "dex.html?id=633"
+                "url": "dex.html?id=633",
+                "method": "Fossil machine"
             },
             {
                 "name": "Tyrantrum",
@@ -43536,9 +43632,15 @@
         ],
         "evolution": [
             {
+                "name": "Sail Fossil",
+                "image": "../images/fossil_sail.png",
+                "url": ""
+            },
+            {
                 "name": "Amaura",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/698.png",
-                "url": "dex.html?id=635"
+                "url": "dex.html?id=635",
+                "method": "Fossil machine"
             },
             {
                 "name": "Aurorus",
@@ -43586,9 +43688,15 @@
         ],
         "evolution": [
             {
+                "name": "Sail Fossil",
+                "image": "../images/fossil_sail.png",
+                "url": ""
+            },
+            {
                 "name": "Amaura",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/698.png",
-                "url": "dex.html?id=635"
+                "url": "dex.html?id=635",
+                "method": "Fossil machine"
             },
             {
                 "name": "Aurorus",
@@ -51424,9 +51532,21 @@
         ],
         "evolution": [
             {
+                "name": " Fossilized Bird",
+                "image": "../images/fossilized_bird.png",
+                "url": ""
+            },
+            {
+                "name": "Fossilized Drake",
+                "image": "../images/fossilized_drake.png",
+                "url": "",
+                "method": "Fusion"
+            },
+            {
                 "name": "Dracozolt",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/880.png",
-                "url": "dex.html?id=762"
+                "url": "dex.html?id=762",
+                "method": "Fossil machine"
             }
         ]
     },
@@ -51469,9 +51589,21 @@
         ],
         "evolution": [
             {
+                "name": " Fossilized Bird",
+                "image": "../images/fossilized_bird.png",
+                "url": ""
+            },
+            {
+                "name": "Fossilized Dino",
+                "image": "../images/fossilized_dino.png",
+                "url": "",
+                "method": "Fusion"
+            },
+            {
                 "name": "Arctozolt",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/881.png",
-                "url": "dex.html?id=763"
+                "url": "dex.html?id=763",
+                "method": "Fossil machine"
             }
         ]
     },
@@ -51514,9 +51646,21 @@
         ],
         "evolution": [
             {
+                "name": " Fossilized Fish",
+                "image": "../images/fossilized_fish.png",
+                "url": ""
+            },
+            {
+                "name": "Fossilized Drake",
+                "image": "../images/fossilized_drake.png",
+                "url": "",
+                "method": "Fusion"
+            },
+            {
                 "name": "Dracovish",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/882.png",
-                "url": "dex.html?id=764"
+                "url": "dex.html?id=764",
+                "method": "Fossil machine"
             }
         ]
     },
@@ -51559,9 +51703,21 @@
         ],
         "evolution": [
             {
+                "name": " Fossilized Fish",
+                "image": "../images/fossilized_fish.png",
+                "url": ""
+            },
+            {
+                "name": "Fossilized Dino",
+                "image": "../images/fossilized_dino.png",
+                "url": "",
+                "method": "Fusion"
+            },
+            {
                 "name": "Arctovish",
                 "image": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/883.png",
-                "url": "dex.html?id=765"
+                "url": "dex.html?id=765",
+                "method": "Fossil machine"
             }
         ]
     },

@@ -352,7 +352,7 @@
         {"name": "Discharge", "level": "36"},
         {"name": "Light Screen", "level": "44"},
         {"name": "Thunder", "level": "45"},
-        {"name": "Wild Carge", "level": "50"}
+        {"name": "Wild Charge", "level": "50"}
     ],
     "33": [
         {"name": "Thunder Shock", "level": "1"},
