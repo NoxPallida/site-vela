@@ -24,25 +24,27 @@ box-sizing: border-box;
 }
 
 html, body {
-height: 100%;
-margin: 0;
-padding: 0;
-overflow-x: hidden;
-font-family: system-ui, -apple-system, Arial, Helvetica, sans-serif;
-background-color: var(--bg-dark);
-color: var(--text-main);
+	margin: 0;
+	padding: 0;
+	overflow-x: clip;
+	font-family: system-ui, -apple-system, Arial, Helvetica, sans-serif;
+	background-color: var(--bg-dark);
+	color: var(--text-main);
 }
 
 body {
-display: flex;
-flex-direction: column;
-min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
 }
 
 /* ==========================================================================
 2. HEADER & NAVIGATION LAYOUT
 ========================================================================== */
 .site-header {
+	position: sticky;
+	top: 0;
+	z-index: 900;
 	padding: 1rem 2rem;
 	background-color: var(--bg-card);
 	border-bottom: 1px solid var(--border-strong);
