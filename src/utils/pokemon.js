@@ -292,7 +292,8 @@ export function getPokemonMovepool(pkmId) {
 			type: moveDetails?.type || 'Normal',
 			category: moveDetails?.category || moveDetails?.damage_class || 'Physical',
 			power: moveDetails?.power ?? moveDetails?.base_power ?? '-',
-			accuracy: moveDetails?.accuracy ?? '-'
+			accuracy: moveDetails?.accuracy ?? '-',
+			pp: moveDetails?.pp ?? '-'
 		};
 	});
 }
